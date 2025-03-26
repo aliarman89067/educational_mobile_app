@@ -1,7 +1,8 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
-node_modules/
+client/node_modules/
+server/node_modules/
 
 # Expo
 .expo/
@@ -30,7 +31,8 @@ yarn-error.*
 *.pem
 
 # local env files
-.env*.local
+/client/.env
+/server/.env
 
 # typescript
 *.tsbuildinfo

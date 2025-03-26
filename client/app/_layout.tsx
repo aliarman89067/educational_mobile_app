@@ -3,6 +3,7 @@ import { SplashScreen, Stack } from "expo-router";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useFonts } from "expo-font";
+import axios from "axios";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,11 +23,15 @@ const Layout = () => {
   }, [loaded, error]);
 
   if (!loaded || error) return;
+
+  axios.defaults.baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
   return (
     <ClerkProvider tokenCache={tokenCache}>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="routes" />
       </Stack>
     </ClerkProvider>
   );

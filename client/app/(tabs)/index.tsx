@@ -22,6 +22,7 @@ import {
   soloQuizSideImage,
 } from "@/constants/images";
 import * as Linking from "expo-linking";
+import { router } from "expo-router";
 
 const Home = () => {
   const { user } = useUser();
@@ -99,7 +100,10 @@ const Home = () => {
                       style={styles.boxImage}
                     />
                   </View>
-                  <TouchableOpacity style={styles.boxPlayButton}>
+                  <TouchableOpacity
+                    onPress={() => router.push("/routes/solo")}
+                    style={styles.boxPlayButton}
+                  >
                     <Text style={styles.boxPlayText}>Play</Text>
                   </TouchableOpacity>
                 </View>

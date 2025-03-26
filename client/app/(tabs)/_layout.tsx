@@ -38,7 +38,6 @@ const TabBarIcon = ({ focused, icon, label }: TabBarIconProps) => {
 
 const TabsLayout = () => {
   const { isSignedIn, isLoaded } = useAuth();
-
   if (!isLoaded) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
