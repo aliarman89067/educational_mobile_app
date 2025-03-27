@@ -101,7 +101,7 @@ const Home = () => {
                     />
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push("/routes/solo")}
+                    onPress={() => router.push("/(routes)/solo")}
                     style={styles.boxPlayButton}
                   >
                     <Text style={styles.boxPlayText}>Play</Text>

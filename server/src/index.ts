@@ -12,7 +12,9 @@ import { Server } from "socket.io";
 import quizRoutes from "./routes/quizRoute";
 import "./models/Topic";
 import "./models/Year";
+import "./models/SoloRoom";
 import "./models/Subject";
+import "./models/Mcq";
 
 dotEnv.config();
 

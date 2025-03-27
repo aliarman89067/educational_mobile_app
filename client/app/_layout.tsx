@@ -31,7 +31,7 @@ const Layout = () => {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
-        <Stack.Screen name="routes" />
+        <Stack.Screen name="(routes)" />
       </Stack>
     </ClerkProvider>
   );
