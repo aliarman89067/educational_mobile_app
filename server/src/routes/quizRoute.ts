@@ -3,15 +3,16 @@ import {
   createSoloQuiz,
   getQuizByCategory,
   getSoloRoom,
+  leaveSoloRoom,
+  submitSoloRoom,
 } from "../controllers/quizController";
-import subjectModel from "../models/Subject";
-import topicModel from "../models/Topic";
-import yearModel from "../models/Year";
 
 const router = express.Router();
 
 router.get("/get-all/:quizType", getQuizByCategory);
 router.post("/solo-player", createSoloQuiz);
 router.get("/get/solo-room/:soloRoomId", getSoloRoom);
+router.put("/leave/solo-room/:roomId", leaveSoloRoom);
+router.post("/submit/solo-room", submitSoloRoom);
 
 export default router;

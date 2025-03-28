@@ -5,14 +5,16 @@ import { fontFamily } from "@/constants/fonts";
 
 interface Props {
   seconds: string | undefined;
+  time: { hours: number; minutes: number; seconds: number };
+  setTime: Dispatch<
+    SetStateAction<{ hours: number; minutes: number; seconds: number }>
+  >;
+  setIsTimeout: Dispatch<SetStateAction<boolean>>;
 }
 
-const Timer = ({ seconds }: Props) => {
-  const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
-  const [isTimeout, setIsTimeout] = useState(false);
-
+const Timer = ({ seconds, time, setTime, setIsTimeout }: Props) => {
+  let id: any;
   useEffect(() => {
-    let id: any;
     if (seconds === "no-limit") {
       id = setInterval(() => {
         handleNormalTimer();
@@ -37,6 +39,7 @@ const Timer = ({ seconds }: Props) => {
       setTime({ hours, minutes, seconds: remainingSeconds });
     } else {
       setIsTimeout(true);
+      clearTimeout(id);
     }
   };
 

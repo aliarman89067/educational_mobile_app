@@ -3,6 +3,7 @@ import subjectModel from "../models/Subject";
 import topicModel from "../models/Topic";
 import yearModel from "../models/Year";
 import SoloRoomModel from "../models/SoloRoom";
+import HistoryModel from "../models/History";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -119,5 +120,55 @@ export const getSoloRoom = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const leaveSoloRoom = async (req: Request, res: Response) => {
+  try {
+    const { roomId } = req.params;
+    if (!roomId) {
+      res
+        .status(404)
+        .json({ success: false, message: "Solo Room Id not exist!" });
+      return;
+    }
+    await SoloRoomModel.findByIdAndUpdate(roomId, { isAlive: false });
+    res.status(200).json({
+      success: true,
+      message: "This Solo room is shut down mean isAlive property set to false",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Something went wrong" });
+  }
+};
+export const submitSoloRoom = async (req: Request, res: Response) => {
+  try {
+    const { roomId, type, mcqs, states, userId, time } = req.body;
+
+    if (!roomId || !type || !mcqs || !states || !time) {
+      res
+        .status(404)
+        .json({ success: false, message: "Payload are not correct!" });
+      return;
+    }
+
+    await SoloRoomModel.findByIdAndUpdate(
+      roomId,
+      { isAlive: false },
+      { new: true }
+    );
+    const newHistory = await HistoryModel.create({
+      mcqs: mcqs,
+      quizIdAndValue: states,
+      roomType: type,
+      soloRoom: roomId,
+      user: userId,
+      time,
+    });
+    res.status(201).json({ success: true, data: newHistory._id });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Something went wrong" });
   }
 };

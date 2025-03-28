@@ -15,6 +15,7 @@ import "./models/Year";
 import "./models/SoloRoom";
 import "./models/Subject";
 import "./models/Mcq";
+import "./models/History";
 
 dotEnv.config();
 
