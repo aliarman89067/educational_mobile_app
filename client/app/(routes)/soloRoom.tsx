@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, usePathname } from "expo-router";
 import axios from "axios";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
@@ -28,6 +28,7 @@ const SoloRoom = () => {
   const [isTimeout, setIsTimeout] = useState(false);
 
   const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const pathname = usePathname();
 
   const [selectedOptionIds, setSelectedOptionIds] = useState<
     | null
@@ -65,17 +66,22 @@ const SoloRoom = () => {
         setData(null);
         setIsError(false);
         setIsLoading(true);
-        const { data } = await axios.get(`/quiz/get/solo-room/${roomId}`);
-        setData(data.data);
+        const { data: quizData } = await axios.get(
+          `/quiz/get/solo-room/${roomId}`
+        );
+        console.log(quizData.data);
+        setData(quizData.data);
       } catch (err: any) {
         console.log(err);
+        router.replace("/(tabs)");
         setIsError(true);
       } finally {
         setIsLoading(false);
       }
     };
     loadRoomData();
-  }, [roomId]);
+    console.log("Its running");
+  }, [roomId, router, pathname]);
 
   const handleOptionChange = ({
     _id,
@@ -211,6 +217,7 @@ const SoloRoom = () => {
         }
       );
       setIsTimeout(false);
+      router.back();
       router.push({
         pathname: "/(routes)/soloResult",
         params: { historyId: responseData.data },

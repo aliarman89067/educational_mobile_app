@@ -25,7 +25,6 @@ const Layout = () => {
   if (!loaded || error) return;
 
   axios.defaults.baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
-
   return (
     <ClerkProvider tokenCache={tokenCache}>
       <Stack screenOptions={{ headerShown: false }}>

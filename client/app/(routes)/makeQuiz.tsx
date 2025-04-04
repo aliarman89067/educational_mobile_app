@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Image,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -9,13 +10,21 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { colors } from "@/constants/colors";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import BackButton from "@/components/backButton";
 import { SelectDropdown, DropdownData } from "expo-select-dropdown";
 import axios from "axios";
 import { fontFamily } from "@/constants/fonts";
+import { useUser } from "@clerk/clerk-expo";
+import LottieView from "lottie-react-native";
+import FindingTimer from "@/components/findingTimer";
+import { noOpponentFound } from "@/constants/images";
 
-const Solo = () => {
+const MakeQuiz = () => {
+  const { isOnline } = useLocalSearchParams() as { isOnline: string };
+
+  const { user } = useUser();
+
   const [selectedCategory, setSelectedCategory] = useState<
     DropdownData<string, string>
   >({
@@ -29,17 +38,10 @@ const Solo = () => {
   const [selectedSubject, setSelectedSubject] = useState<DropdownData<
     string,
     string
-  > | null>({ key: "2", value: "Math" });
-  const [dataSubjects] = useState<DropdownData<string, string>[]>([
-    { key: "1", value: "All" },
-    { key: "2", value: "Math" },
-    { key: "3", value: "Science" },
-    { key: "4", value: "Physics" },
-    { key: "5", value: "Chemistry" },
-    { key: "6", value: "Biology" },
-    { key: "7", value: "Computer" },
-    { key: "8", value: "Algebra" },
-  ]);
+  > | null>(null);
+  const [dataSubjects, setDataSubjects] = useState<
+    DropdownData<string, string>[] | null
+  >(null);
   const [selectedTopic, setSelectedTopic] = useState<DropdownData<
     string,
     string
@@ -55,19 +57,7 @@ const Solo = () => {
   const [dataYears, setDataYears] = useState<
     DropdownData<string, string>[] | null
   >(null);
-  const [dataTime] = useState<DropdownData<string, string>[]>([
-    { key: "no-limit", value: "No Limit" },
-    { key: "10", value: "10 seconds" },
-    { key: "20", value: "20 seconds" },
-    { key: "30", value: "30 seconds" },
-    { key: "40", value: "40 seconds" },
-    { key: "50", value: "50 seconds" },
-    { key: "60", value: "1 minute" },
-    { key: "120", value: "2 minutes" },
-    { key: "180", value: "3 minutes" },
-    { key: "240", value: "4 minutes" },
-    { key: "300", value: "5 minutes" },
-  ]);
+  const [dataTime] = useState<DropdownData<string, string>[] | null>(null);
   const [selectedTime, setSelectedTime] = useState<
     DropdownData<string, string>
   >({
@@ -90,6 +80,11 @@ const Solo = () => {
   const [subjectId, setSubjectId] = useState<string | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
+  // Online States
+  const [isOnlineModal, setIsOnlineModal] = useState(false);
+  const [errorFinding, setErrorFinding] = useState(false);
+  const [isOpponentFinding, setIsOpponentFinding] = useState(false);
+  const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
     const loadQuiz = async () => {
@@ -97,10 +92,20 @@ const Solo = () => {
         const { data } = await axios.get(
           `/quiz/get-all/${selectedCategory.value}`
         );
+        const formattedSubjectData = data.subjects.map((subject: any) => ({
+          key: subject._id,
+          value: subject.subject,
+        }));
+        setSelectedSubject({
+          key: formattedSubjectData[0].key,
+          value: formattedSubjectData[0].value,
+        });
+        setDataSubjects(formattedSubjectData);
         if (selectedCategory.value === "Topical") {
           const topicsData: any = data.data[0].topics.map((topic: any) => ({
             key: topic._id,
             value: topic.topic,
+            subjectId: "",
           }));
           setSubjectId(data.data[0]._id);
           setDataTopics(topicsData);
@@ -130,8 +135,7 @@ const Solo = () => {
     };
     loadQuiz();
   }, [selectedCategory]);
-
-  const handlePlay = async () => {
+  const handleSoloPlay = async () => {
     if (
       !selectedSubject ||
       (!selectedTopic && !selectedYear) ||
@@ -166,6 +170,62 @@ const Solo = () => {
       setIsLoading(false);
     }
   };
+  const handleOnlinePlay = () => {
+    if (
+      !selectedSubject ||
+      !selectedSubject.key ||
+      (!selectedTopic && !selectedYear) ||
+      !user ||
+      !user.id ||
+      !selectedTime ||
+      !selectedTime.key
+    ) {
+      ToastAndroid.showWithGravity(
+        "Please Select all Fields!",
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+      return;
+    }
+    if (!user || !user.id) {
+      ToastAndroid.showWithGravity(
+        "Your not authenticated!",
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+      return;
+    }
+    try {
+      setNotFound(false);
+      setIsOnlineModal(true);
+      setErrorFinding(false);
+      setIsOpponentFinding(true);
+      const onlineData = {
+        subjectId: selectedSubject.key,
+        yearIdOrTopicId: selectedTopic?.key ?? selectedYear?.key,
+        quizLimit: Number(selectedLength.key),
+        quizType: selectedCategory.value,
+        isGuest: user?.id ? false : true,
+        userId: user.id,
+        name: user.fullName,
+        imageUrl: user.imageUrl,
+        // sessionId,
+        seconds: selectedTime.key,
+      };
+    } catch (error) {
+      console.log(error);
+    } finally {
+    }
+  };
+  const handleOnlineCancel = () => {
+    setIsOpponentFinding(false);
+    setIsOnlineModal(false);
+    setErrorFinding(false);
+  };
+  const handleNoOpponentFound = () => {
+    setNotFound(true);
+  };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -177,12 +237,187 @@ const Solo = () => {
             </View>
           </View>
         )}
+        {isOnlineModal && (
+          <View style={styles.onlineContainer}>
+            <TouchableOpacity
+              onPress={handleOnlineCancel}
+              activeOpacity={0.7}
+              style={{
+                backgroundColor: "#ff4d6d",
+                paddingHorizontal: 20,
+                paddingVertical: 12,
+                borderRadius: 5,
+                marginRight: "auto",
+                marginTop: 10,
+              }}
+            >
+              <Text
+                style={{
+                  color: "#fff",
+                  fontFamily: fontFamily.Regular,
+                  fontSize: 14,
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+            {notFound ? (
+              <View
+                style={{
+                  flex: 1,
+                  height: "100%",
+                  width: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  marginTop: 20,
+                  gap: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.grayDark,
+                    fontSize: 30,
+                    fontFamily: fontFamily.Black,
+                    textAlign: "center",
+                    width: 300,
+                  }}
+                >
+                  No opponent found!
+                </Text>
+                <Image
+                  source={noOpponentFound}
+                  alt="No opponent Found Image"
+                  resizeMode="contain"
+                  style={{
+                    width: 250,
+                    height: 250,
+                  }}
+                />
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexDirection: "row",
+                    gap: 10,
+                    marginTop: 6,
+                  }}
+                >
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={handleOnlineCancel}
+                    style={{
+                      flex: 1,
+                      width: "100%",
+                      paddingVertical: 17,
+                      borderRadius: 8,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: colors.grayDark,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontFamily: fontFamily.Regular,
+                        fontSize: 14,
+                      }}
+                    >
+                      Back
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      width: "100%",
+                      paddingVertical: 17,
+                      borderRadius: 8,
+                      alignItems: "center",
+                      justifyContent: "center",
+                      backgroundColor: colors.primary,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: "white",
+                        fontFamily: fontFamily.Regular,
+                        fontSize: 14,
+                      }}
+                    >
+                      Search Again
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <View
+                style={[
+                  styles.onlineContent,
+                  {
+                    marginTop: 20,
+                  },
+                ]}
+              >
+                <Text
+                  style={{
+                    fontFamily: fontFamily.Bold,
+                    color: colors.grayDark,
+                    fontSize: 22,
+                    textAlign: "center",
+                  }}
+                >
+                  Finding Opponent
+                </Text>
+                <View
+                  style={{
+                    transform: [{ translateY: -27 }],
+                    alignItems: "center",
+                  }}
+                >
+                  <LottieView
+                    autoPlay
+                    loop
+                    style={{
+                      width: 300,
+                      height: 300,
+                    }}
+                    source={require("../../assets/animations/searching.json")}
+                  />
+                </View>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.Medium,
+                    color: colors.grayDark,
+                    fontSize: 18,
+                    textAlign: "center",
+                    transform: [{ translateY: -80 }],
+                  }}
+                >
+                  Looking for a student who has selected{" "}
+                  <Text style={{ fontFamily: fontFamily.Bold }}>
+                    {selectedSubject?.value}
+                  </Text>{" "}
+                  and{" "}
+                  <Text style={{ fontFamily: fontFamily.Bold }}>
+                    {selectedTopic?.value ?? selectedYear?.value}
+                  </Text>
+                  .
+                </Text>
+                <FindingTimer
+                  time={10}
+                  isStart={isOpponentFinding}
+                  fn={handleNoOpponentFound}
+                />
+              </View>
+            )}
+          </View>
+        )}
         <View style={styles.contentContainer}>
           <BackButton />
           <View style={styles.optionsContainer}>
             <View style={styles.categoryContainer}>
               <SelectDropdown
-                data={dataSubjects}
+                data={dataSubjects!!}
                 placeholder={"Select Subject"}
                 selected={selectedSubject}
                 setSelected={setSelectedSubject}
@@ -252,7 +487,7 @@ const Solo = () => {
             )}
             <View style={styles.categoryContainer}>
               <SelectDropdown
-                data={dataTime}
+                data={dataTime!!}
                 placeholder={"Select Time"}
                 selected={selectedTime}
                 setSelected={setSelectedTime}
@@ -282,11 +517,13 @@ const Solo = () => {
             </View>
           </View>
           <TouchableOpacity
-            onPress={handlePlay}
+            onPress={JSON.parse(isOnline) ? handleOnlinePlay : handleSoloPlay}
             activeOpacity={0.7}
             style={styles.playButton}
           >
-            <Text style={styles.playText}>Play</Text>
+            <Text style={styles.playText}>
+              {JSON.parse(isOnline) ? "Find Player" : "Play"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -294,7 +531,7 @@ const Solo = () => {
   );
 };
 
-export default Solo;
+export default MakeQuiz;
 
 const styles = StyleSheet.create({
   container: {
@@ -360,5 +597,24 @@ const styles = StyleSheet.create({
     color: "white",
     fontFamily: fontFamily.Medium,
     fontSize: 18,
+  },
+  onlineContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    flex: 1,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#fff",
+    zIndex: 100,
+    paddingHorizontal: 10,
+  },
+  onlineContent: {
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+    justifyContent: "center",
+    width: "100%",
+    height: "100%",
   },
 });

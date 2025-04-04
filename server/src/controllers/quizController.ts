@@ -9,6 +9,7 @@ export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
     const { quizType } = req.params;
     let data;
+    const subjects = await subjectModel.find().select("_id subject");
     if (quizType === "Topical") {
       data = await subjectModel
         .find()
@@ -20,7 +21,7 @@ export const getQuizByCategory = async (req: Request, res: Response) => {
         .populate({ path: "years" })
         .select("-topics");
     }
-    res.status(200).json({ success: true, data: data });
+    res.status(200).json({ success: true, data: data, subjects });
   } catch (error) {
     console.log(error);
   }
@@ -170,5 +171,35 @@ export const submitSoloRoom = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+export const soloRoomResult = async (req: Request, res: Response) => {
+  const { resultId } = req.params;
+  try {
+    if (!resultId) {
+      res.status(404).json({ success: false, message: "Result Id not exist!" });
+      return;
+    }
+    console.log(resultId);
+    const data = await HistoryModel.findOne({
+      _id: resultId,
+    })
+      .populate({ path: "mcqs" })
+      .populate({ path: "user" })
+      .populate({
+        path: "soloRoom",
+        select: "_id subjectId yearId topicId",
+        populate: {
+          path: "subjectId yearId topicId",
+          select: "subject year topic",
+        },
+      });
+    res.status(200).json({ success: true, data: data });
+  } catch (error: any) {
+    console.log(error);
+    res.status(500).json({
+      message: `Failed to get solo room results ${error.message ?? error}`,
+    });
   }
 };

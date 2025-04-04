@@ -11,6 +11,7 @@ import soloQuizImage from "@/assets/images/soloQuizImage.png";
 import soloQuizSideImage from "@/assets/images/soloQuizSideImage.png";
 import joinQuizImage from "@/assets/images/joinQuizImage.png";
 import joinQuizSideImage from "@/assets/images/joinQuizSideImage.png";
+import noOpponentFound from "@/assets/images/no-opponent-found.png";
 
 export {
   homeImage,
@@ -26,4 +27,5 @@ export {
   soloQuizSideImage,
   joinQuizImage,
   joinQuizSideImage,
+  noOpponentFound,
 };

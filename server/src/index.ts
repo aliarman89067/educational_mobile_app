@@ -10,12 +10,14 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 // Route Imports
 import quizRoutes from "./routes/quizRoute";
+import subjectRoute from "./routes/subjectRoute";
 import "./models/Topic";
 import "./models/Year";
 import "./models/SoloRoom";
 import "./models/Subject";
 import "./models/Mcq";
 import "./models/History";
+import "./models/User";
 
 dotEnv.config();
 
@@ -36,6 +38,7 @@ app.use(helmet.crossOriginResourcePolicy({ policy: "cross-origin" }));
 app.use(morgan("common"));
 // Routes
 app.use("/quiz", quizRoutes);
+app.use("/subject", subjectRoute);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Hello World" });

@@ -31,14 +31,12 @@ const Home = () => {
   const handleSignOut = async () => {
     try {
       await signOut();
-      // Redirect to your desired page
       Linking.openURL(Linking.createURL("/"));
     } catch (err) {
-      // See https://clerk.com/docs/custom-flows/error-handling
-      // for more info on error handling
       console.error(JSON.stringify(err, null, 2));
     }
   };
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.mainContainer}>
@@ -76,7 +74,15 @@ const Home = () => {
                       style={styles.boxImage}
                     />
                   </View>
-                  <TouchableOpacity style={styles.boxPlayButton}>
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(routes)/makeQuiz",
+                        params: { isOnline: "true" },
+                      })
+                    }
+                    style={styles.boxPlayButton}
+                  >
                     <Text style={styles.boxPlayText}>Play</Text>
                   </TouchableOpacity>
                 </View>
@@ -101,7 +107,12 @@ const Home = () => {
                     />
                   </View>
                   <TouchableOpacity
-                    onPress={() => router.push("/(routes)/solo")}
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(routes)/makeQuiz",
+                        params: { isOnline: "false" },
+                      })
+                    }
                     style={styles.boxPlayButton}
                   >
                     <Text style={styles.boxPlayText}>Play</Text>
