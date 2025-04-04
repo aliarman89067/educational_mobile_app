@@ -19,8 +19,12 @@ import { useUser } from "@clerk/clerk-expo";
 import LottieView from "lottie-react-native";
 import FindingTimer from "@/components/findingTimer";
 import { noOpponentFound } from "@/constants/images";
+import { useSocket } from "@/context/SocketContext";
+import { useSocketStore } from "@/context/zustandStore";
 
 const MakeQuiz = () => {
+  const { socketIo } = useSocket();
+  const { sessionId } = useSocketStore();
   const { isOnline } = useLocalSearchParams() as { isOnline: string };
 
   const { user } = useUser();
@@ -85,6 +89,12 @@ const MakeQuiz = () => {
   const [errorFinding, setErrorFinding] = useState(false);
   const [isOpponentFinding, setIsOpponentFinding] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [isOpponentFinded, setIsOpponentFinded] = useState(false);
+  const [opponentData, setOpponentData] = useState<null | {
+    fullName: string;
+    imageUrl: string;
+  }>(null);
+  const [onlineRoomId, setOnlineRoomId] = useState("");
 
   useEffect(() => {
     const loadQuiz = async () => {
@@ -209,9 +219,33 @@ const MakeQuiz = () => {
         userId: user.id,
         name: user.fullName,
         imageUrl: user.imageUrl,
-        // sessionId,
+        sessionId,
         seconds: selectedTime.key,
       };
+
+      socketIo.emit("create-online-room", onlineData);
+      socketIo.on("no-student-found", (data) => {
+        setIsOpponentFinding(false);
+        setErrorFinding(true);
+        setNotFound(true);
+      });
+
+      const handleStudentFind = (data: any) => {
+        const { roomId, opponent } = data;
+        setOpponentData(opponent);
+        setOnlineRoomId(roomId);
+        setIsOpponentFinded(true);
+        setIsOpponentFinding(false);
+      };
+      socketIo.on("student-find", handleStudentFind);
+      socketIo.on("payload-error", () => {
+        ToastAndroid.showWithGravity(
+          "Something went wrong!",
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER
+        );
+        setIsOpponentFinding(false);
+      });
     } catch (error) {
       console.log(error);
     } finally {
@@ -224,6 +258,13 @@ const MakeQuiz = () => {
   };
   const handleNoOpponentFound = () => {
     setNotFound(true);
+  };
+  const handleOnlineRoomRoute = () => {
+    setIsOpponentFinded(false);
+    setIsOpponentFinding(false);
+    setIsOnlineModal(false);
+    setNotFound(false);
+    router.push({ pathname: "/(routes)/onlineRoom", params: { onlineRoomId } });
   };
 
   return (
@@ -238,179 +279,239 @@ const MakeQuiz = () => {
           </View>
         )}
         {isOnlineModal && (
-          <View style={styles.onlineContainer}>
-            <TouchableOpacity
-              onPress={handleOnlineCancel}
-              activeOpacity={0.7}
-              style={{
-                backgroundColor: "#ff4d6d",
-                paddingHorizontal: 20,
-                paddingVertical: 12,
-                borderRadius: 5,
-                marginRight: "auto",
-                marginTop: 10,
-              }}
-            >
-              <Text
-                style={{
-                  color: "#fff",
-                  fontFamily: fontFamily.Regular,
-                  fontSize: 14,
-                }}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-            {notFound ? (
-              <View
-                style={{
-                  flex: 1,
-                  height: "100%",
-                  width: "100%",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginTop: 20,
-                  gap: 10,
-                }}
-              >
-                <Text
-                  style={{
-                    color: colors.grayDark,
-                    fontSize: 30,
-                    fontFamily: fontFamily.Black,
-                    textAlign: "center",
-                    width: 300,
-                  }}
-                >
-                  No opponent found!
-                </Text>
-                <Image
-                  source={noOpponentFound}
-                  alt="No opponent Found Image"
-                  resizeMode="contain"
-                  style={{
-                    width: 250,
-                    height: 250,
-                  }}
-                />
+          <>
+            {isOpponentFinded ? (
+              <View style={styles.onlineContainer}>
                 <View
                   style={{
                     alignItems: "center",
                     justifyContent: "center",
-                    flexDirection: "row",
-                    gap: 10,
-                    marginTop: 6,
+                    flex: 1,
+                    width: "100%",
+                    height: "100%",
+                    gap: 15,
                   }}
                 >
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={handleOnlineCancel}
+                  <Text
                     style={{
-                      flex: 1,
-                      width: "100%",
-                      paddingVertical: 17,
-                      borderRadius: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: colors.grayDark,
+                      color: colors.grayDark,
+                      fontSize: 28,
+                      fontFamily: fontFamily.Bold,
+                      textAlign: "center",
                     }}
                   >
-                    <Text
-                      style={{
-                        color: "white",
-                        fontFamily: fontFamily.Regular,
-                        fontSize: 14,
-                      }}
-                    >
-                      Back
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
+                    Opponent Finded
+                  </Text>
+                  <Text
                     style={{
-                      flex: 1,
-                      width: "100%",
-                      paddingVertical: 17,
-                      borderRadius: 8,
-                      alignItems: "center",
-                      justifyContent: "center",
-                      backgroundColor: colors.primary,
+                      color: colors.grayDark,
+                      fontSize: 18,
+                      fontFamily: fontFamily.Regular,
+                      textAlign: "center",
                     }}
                   >
+                    Match Start in 5 Seconds
+                  </Text>
+                  <View style={{ alignItems: "center", gap: 10 }}>
+                    <Image
+                      source={{ uri: opponentData?.imageUrl }}
+                      alt="Opponent image url"
+                      resizeMode="contain"
+                      style={{ width: 70, height: 70, borderRadius: 300 }}
+                    />
                     <Text
                       style={{
-                        color: "white",
-                        fontFamily: fontFamily.Regular,
-                        fontSize: 14,
+                        color: colors.grayDark,
+                        fontSize: 22,
+                        fontFamily: fontFamily.Medium,
+                        textAlign: "center",
                       }}
                     >
-                      Search Again
+                      {opponentData?.fullName}
                     </Text>
-                  </TouchableOpacity>
+                  </View>
+                  <View style={{ marginTop: 50 }}>
+                    <FindingTimer
+                      time={5}
+                      isStart={isOpponentFinded}
+                      fn={handleOnlineRoomRoute}
+                    />
+                  </View>
                 </View>
               </View>
             ) : (
-              <View
-                style={[
-                  styles.onlineContent,
-                  {
-                    marginTop: 20,
-                  },
-                ]}
-              >
-                <Text
+              <View style={styles.onlineContainer}>
+                <TouchableOpacity
+                  onPress={handleOnlineCancel}
+                  activeOpacity={0.7}
                   style={{
-                    fontFamily: fontFamily.Bold,
-                    color: colors.grayDark,
-                    fontSize: 22,
-                    textAlign: "center",
+                    backgroundColor: "#ff4d6d",
+                    paddingHorizontal: 20,
+                    paddingVertical: 12,
+                    borderRadius: 5,
+                    marginRight: "auto",
+                    marginTop: 10,
                   }}
                 >
-                  Finding Opponent
-                </Text>
-                <View
-                  style={{
-                    transform: [{ translateY: -27 }],
-                    alignItems: "center",
-                  }}
-                >
-                  <LottieView
-                    autoPlay
-                    loop
+                  <Text
                     style={{
-                      width: 300,
-                      height: 300,
+                      color: "#fff",
+                      fontFamily: fontFamily.Regular,
+                      fontSize: 14,
                     }}
-                    source={require("../../assets/animations/searching.json")}
-                  />
-                </View>
-                <Text
-                  style={{
-                    fontFamily: fontFamily.Medium,
-                    color: colors.grayDark,
-                    fontSize: 18,
-                    textAlign: "center",
-                    transform: [{ translateY: -80 }],
-                  }}
-                >
-                  Looking for a student who has selected{" "}
-                  <Text style={{ fontFamily: fontFamily.Bold }}>
-                    {selectedSubject?.value}
-                  </Text>{" "}
-                  and{" "}
-                  <Text style={{ fontFamily: fontFamily.Bold }}>
-                    {selectedTopic?.value ?? selectedYear?.value}
+                  >
+                    Cancel
                   </Text>
-                  .
-                </Text>
-                <FindingTimer
-                  time={10}
-                  isStart={isOpponentFinding}
-                  fn={handleNoOpponentFound}
-                />
+                </TouchableOpacity>
+                {notFound ? (
+                  <View
+                    style={{
+                      flex: 1,
+                      height: "100%",
+                      width: "100%",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginTop: 20,
+                      gap: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.grayDark,
+                        fontSize: 30,
+                        fontFamily: fontFamily.Black,
+                        textAlign: "center",
+                        width: 300,
+                      }}
+                    >
+                      No opponent found!
+                    </Text>
+                    <Image
+                      source={noOpponentFound}
+                      alt="No opponent Found Image"
+                      resizeMode="contain"
+                      style={{
+                        width: 250,
+                        height: 250,
+                      }}
+                    />
+                    <View
+                      style={{
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexDirection: "row",
+                        gap: 10,
+                        marginTop: 6,
+                      }}
+                    >
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={handleOnlineCancel}
+                        style={{
+                          flex: 1,
+                          width: "100%",
+                          paddingVertical: 17,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: colors.grayDark,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontFamily: fontFamily.Regular,
+                            fontSize: 14,
+                          }}
+                        >
+                          Back
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={handleOnlinePlay}
+                        activeOpacity={0.7}
+                        style={{
+                          flex: 1,
+                          width: "100%",
+                          paddingVertical: 17,
+                          borderRadius: 8,
+                          alignItems: "center",
+                          justifyContent: "center",
+                          backgroundColor: colors.primary,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontFamily: fontFamily.Regular,
+                            fontSize: 14,
+                          }}
+                        >
+                          Search Again
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ) : (
+                  <View
+                    style={[
+                      styles.onlineContent,
+                      {
+                        marginTop: 20,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        fontFamily: fontFamily.Bold,
+                        color: colors.grayDark,
+                        fontSize: 22,
+                        textAlign: "center",
+                      }}
+                    >
+                      Finding Opponent
+                    </Text>
+                    <View
+                      style={{
+                        transform: [{ translateY: -27 }],
+                        alignItems: "center",
+                      }}
+                    >
+                      <LottieView
+                        autoPlay
+                        loop
+                        style={{
+                          width: 300,
+                          height: 300,
+                        }}
+                        source={require("../../assets/animations/searching.json")}
+                      />
+                    </View>
+                    <Text
+                      style={{
+                        fontFamily: fontFamily.Medium,
+                        color: colors.grayDark,
+                        fontSize: 18,
+                        textAlign: "center",
+                        transform: [{ translateY: -80 }],
+                      }}
+                    >
+                      Looking for a student who has selected{" "}
+                      <Text style={{ fontFamily: fontFamily.Bold }}>
+                        {selectedSubject?.value}
+                      </Text>{" "}
+                      and{" "}
+                      <Text style={{ fontFamily: fontFamily.Bold }}>
+                        {selectedTopic?.value ?? selectedYear?.value}
+                      </Text>
+                      .
+                    </Text>
+                    <FindingTimer time={15} isStart={isOpponentFinding} />
+                  </View>
+                )}
               </View>
             )}
-          </View>
+          </>
         )}
         <View style={styles.contentContainer}>
           <BackButton />

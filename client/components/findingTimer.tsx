@@ -6,7 +6,7 @@ import { fontFamily } from "@/constants/fonts";
 interface Props {
   time: number;
   isStart: boolean;
-  fn: () => void;
+  fn?: () => void;
 }
 
 const FindingTimer = ({ time, isStart, fn }: Props) => {
@@ -23,10 +23,12 @@ const FindingTimer = ({ time, isStart, fn }: Props) => {
             return prev - 1;
           }
           clearInterval(interval.current);
-          fn();
+          if (fn) {
+            fn();
+          }
           return prev;
         });
-      }, 600);
+      }, 800);
     }
 
     return () => clearInterval(interval.current);

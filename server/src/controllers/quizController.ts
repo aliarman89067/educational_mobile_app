@@ -4,6 +4,8 @@ import topicModel from "../models/Topic";
 import yearModel from "../models/Year";
 import SoloRoomModel from "../models/SoloRoom";
 import HistoryModel from "../models/History";
+import OnlineRoomModel from "../models/OnlineRoom";
+import UserModel from "../models/User";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -201,5 +203,134 @@ export const soloRoomResult = async (req: Request, res: Response) => {
     res.status(500).json({
       message: `Failed to get solo room results ${error.message ?? error}`,
     });
+  }
+};
+
+export const getOnlineRoom = async (req: Request, res: Response) => {
+  const { onlineRoomId, userId, sessionId } = req.params as {
+    onlineRoomId: string;
+    userId: string;
+    sessionId: string;
+  };
+  try {
+    if (!onlineRoomId || !userId) {
+      res.status(404).json({
+        success: false,
+        message: "Params payload is not correct",
+      });
+      return;
+    }
+    const isOnlineRoomAlive = await OnlineRoomModel.findOne({
+      _id: onlineRoomId,
+    }).select("isUser1Alive isUser2Alive user1 user2");
+    if (
+      (!isOnlineRoomAlive?.isUser1Alive && !isOnlineRoomAlive?.isUser2Alive) ||
+      !isOnlineRoomAlive
+    ) {
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This Online Room is not valid. Its expired!",
+      });
+      return;
+    }
+    if (isOnlineRoomAlive.user1 === userId && !isOnlineRoomAlive.isUser1Alive) {
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This room is expired for user 1",
+      });
+      return;
+    } else if (
+      isOnlineRoomAlive.user2 === userId &&
+      !isOnlineRoomAlive.isUser2Alive
+    ) {
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This room is expired for user 2",
+      });
+      return;
+    }
+    if (
+      isOnlineRoomAlive.user1 !== userId &&
+      isOnlineRoomAlive.user2 !== userId
+    ) {
+      res.status(200).json({
+        success: false,
+        error: "server-error",
+        message: "User id is not matching any of the online room user id's",
+      });
+      return;
+    }
+    const onlineRoomData = await OnlineRoomModel.findOne({
+      _id: onlineRoomId,
+    })
+      .populate({ path: "subjectId", select: "_id subject" })
+      .populate({ path: "yearId", select: "_id year" })
+      .populate({ path: "topicId", select: "_id topic" })
+      .populate({ path: "quizes" });
+
+    // Finding opponent
+    // Validating that both user exist in online room
+    if (!onlineRoomData?.user1 || !onlineRoomData.user2) {
+      res.status(200).json({
+        success: false,
+        error: "server-error",
+        message:
+          "One user is missing in online room means its not completely updated!",
+      });
+      return;
+    }
+    let opponent;
+    let remainingTime: string | null | undefined = "";
+    if (onlineRoomData.user1 === userId) {
+      const updatedOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
+        {
+          _id: onlineRoomId,
+          isEnded: false,
+        },
+        {
+          user1SessionId: sessionId,
+        },
+        { new: true }
+      );
+      remainingTime = updatedOnlineRoom?.user1RemainingTime;
+      opponent = await UserModel.findOne({
+        clerkId: onlineRoomData.user2,
+      });
+    } else if (onlineRoomData.user2 === userId) {
+      const updatedOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
+        {
+          _id: onlineRoomId,
+          isEnded: false,
+        },
+        {
+          user2SessionId: sessionId,
+        },
+        { new: true }
+      );
+      remainingTime = updatedOnlineRoom?.user2RemainingTime;
+      opponent = await UserModel.findOne({
+        clerkId: onlineRoomData.user1,
+      });
+    }
+    if (!opponent) {
+      res.status(200).json({
+        success: false,
+        error: "opponent-left",
+        message: "Can't find your opponent",
+      });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      data: { onlineRoomData, opponent, remainingTime },
+    });
+  } catch (error: any) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: `Failed to get online room ${error.message ?? error}` });
   }
 };
