@@ -3,6 +3,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -197,6 +198,35 @@ const SoloResult = () => {
     setHistoryType(type);
   };
 
+  const handleReplay = async () => {
+    try {
+      if (!data?.soloRoom._id) {
+        ToastAndroid.showWithGravity(
+          "Something went wrong try again later!",
+          ToastAndroid.SHORT,
+          ToastAndroid.CENTER
+        );
+      }
+      const { data: responseData } = await axios.put(
+        "/quiz/reactive-solo-room",
+        {
+          soloRoomId: data?.soloRoom._id,
+        }
+      );
+      router.replace({
+        pathname: "/(routes)/soloRoom",
+        params: { roomId: responseData.data },
+      });
+    } catch (error) {
+      console.log(error);
+      ToastAndroid.showWithGravity(
+        "Something went wrong try again later!",
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+    }
+  };
+
   return (
     <SafeAreaView>
       <ScrollView>
@@ -244,7 +274,11 @@ const SoloResult = () => {
             </Text>
             {getCompleteTime()}
           </View>
-          <TouchableOpacity activeOpacity={0.7} style={styles.replayButton}>
+          <TouchableOpacity
+            onPress={handleReplay}
+            activeOpacity={0.7}
+            style={styles.replayButton}
+          >
             <Text style={styles.subTitleText}>Replay</Text>
           </TouchableOpacity>
           <View style={styles.historyButtonContainer}>

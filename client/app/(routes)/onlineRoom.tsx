@@ -2,6 +2,7 @@ import {
   ActivityIndicator,
   Image,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   ToastAndroid,
@@ -473,476 +474,478 @@ const OnlineRoom = () => {
         </View>
       )}
       {!isLoading && data && (
-        <View style={styles.container}>
-          {/* Leave Modal */}
-          {isLeaveModal && (
-            <>
-              <View style={styles.leaveModalContainer}>
-                {isLeaveLoading ? (
-                  <View
-                    style={{
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flex: 1,
-                      flexDirection: "row",
-                      gap: 10,
-                    }}
-                  >
-                    <ActivityIndicator size={20} color="white" />
-                    <Text
-                      style={{
-                        color: "#fff",
-                        fontSize: 17,
-                        fontFamily: fontFamily.Medium,
-                      }}
-                    >
-                      Leaving...
-                    </Text>
-                  </View>
-                ) : (
-                  <>
-                    {isLeaveError && (
-                      <Text
-                        style={{
-                          color: "#ff8fa3",
-                          fontSize: 17,
-                          fontFamily: fontFamily.Medium,
-                          textAlign: "center",
-                        }}
-                      >
-                        Something went wrong!
-                      </Text>
-                    )}
-                    <Text style={styles.leaveModalTitle}>Are you sure?</Text>
+        <ScrollView style={{ flex: 1, height: "100%" }}>
+          <View style={styles.container}>
+            {/* Leave Modal */}
+            {isLeaveModal && (
+              <>
+                <View style={styles.leaveModalContainer}>
+                  {isLeaveLoading ? (
                     <View
                       style={{
-                        flexDirection: "row",
                         alignItems: "center",
+                        justifyContent: "center",
+                        flex: 1,
+                        flexDirection: "row",
                         gap: 10,
                       }}
                     >
-                      <TouchableOpacity
-                        onPress={handleResign}
-                        style={styles.leaveModalButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.leaveModalButtonText}>Yes</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => setIsLeaveModal(false)}
-                        style={styles.stayModalButton}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.stayModalButtonText}>No</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </>
-                )}
-              </View>
-            </>
-          )}
-          {/* Info Modal */}
-          {isInfoModal && (
-            <View style={styles.leaveModalContainer}>
-              <View
-                style={{
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: 7,
-                  flex: 1,
-                }}
-              >
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => setIsInfoModal(false)}
-                  style={{
-                    backgroundColor: "white",
-                    paddingVertical: 13,
-                    paddingHorizontal: 20,
-                    borderRadius: 6,
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: 4,
-                    marginLeft: "auto",
-                    marginBottom: 10,
-                  }}
-                >
-                  <Text
-                    style={{
-                      color: colors.primary,
-                      fontSize: 14,
-                      fontFamily: fontFamily.Bold,
-                    }}
-                  >
-                    Close
-                  </Text>
-                  <AntDesign name="close" size={16} color={colors.primary} />
-                </TouchableOpacity>
-                <View
-                  style={{
-                    backgroundColor: "#fff",
-                    padding: 10,
-                    borderRadius: 10,
-                    gap: 10,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 100,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
+                      <ActivityIndicator size={20} color="white" />
                       <Text
                         style={{
-                          color: "white",
-                          fontSize: 15,
-                          fontFamily: fontFamily.Regular,
-                        }}
-                      >
-                        Time
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 170,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 15,
+                          color: "#fff",
+                          fontSize: 17,
                           fontFamily: fontFamily.Medium,
                         }}
                       >
-                        <>{data.onlineRoomData.seconds} Seconds</>
+                        Leaving...
                       </Text>
                     </View>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 100,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 15,
-                          fontFamily: fontFamily.Regular,
-                        }}
-                      >
-                        Quiz
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 170,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 15,
-                          fontFamily: fontFamily.Medium,
-                        }}
-                      >
-                        {data.onlineRoomData.quizes.length}
-                      </Text>
-                    </View>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 100,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 15,
-                          fontFamily: fontFamily.Regular,
-                        }}
-                      >
-                        {data.onlineRoomData.quizType === "Topical"
-                          ? "Topic"
-                          : "Year"}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        backgroundColor: colors.grayDark,
-                        borderRadius: 5,
-                        width: 170,
-                        paddingVertical: 10,
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          color: "white",
-                          fontSize: 15,
-                          fontFamily: fontFamily.Medium,
-                        }}
-                      >
-                        {data.onlineRoomData.quizType === "Topical" ? (
-                          <>{data.onlineRoomData.topicId.topic}</>
-                        ) : (
-                          <>{data.onlineRoomData.yearId.year}</>
-                        )}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            </View>
-          )}
-          <View style={styles.innerContainer}>
-            {isOpponentResign && (
-              <View
-                style={{
-                  width: "100%",
-                  height: 50,
-                  backgroundColor: "#fff",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingHorizontal: 20,
-                  marginBottom: 10,
-                  gap: 5,
-                  borderRadius: 5,
-                  elevation: 2,
-                }}
-              >
-                <Image
-                  source={{ uri: data.opponent.imageUrl }}
-                  alt="Opponent image"
-                  resizeMode="contain"
-                  style={{ width: 35, height: 35, borderRadius: 100 }}
-                />
-                <Text
-                  style={{
-                    color: colors.grayDark,
-                    fontFamily: fontFamily.Bold,
-                    fontSize: 15,
-                  }}
-                >
-                  {data.opponent.fullName}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.grayDark,
-                    fontFamily: fontFamily.Regular,
-                    fontSize: 15,
-                  }}
-                >
-                  Resign the quiz
-                </Text>
-              </View>
-            )}
-            {isOpponentComplete && (
-              <View
-                style={{
-                  width: "100%",
-                  height: 50,
-                  backgroundColor: "#fff",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  paddingHorizontal: 20,
-                  marginBottom: 10,
-                  gap: 5,
-                  borderRadius: 5,
-                  elevation: 2,
-                }}
-              >
-                <Image
-                  source={{ uri: data.opponent.imageUrl }}
-                  alt="Opponent image"
-                  resizeMode="contain"
-                  style={{ width: 35, height: 35, borderRadius: 100 }}
-                />
-                <Text
-                  style={{
-                    color: colors.grayDark,
-                    fontFamily: fontFamily.Bold,
-                    fontSize: 15,
-                  }}
-                >
-                  {data.opponent.fullName}
-                </Text>
-                <Text
-                  style={{
-                    color: colors.grayDark,
-                    fontFamily: fontFamily.Regular,
-                    fontSize: 15,
-                  }}
-                >
-                  completed in {opponentCompleteTime}
-                </Text>
-              </View>
-            )}
-            <View style={styles.headerContainer}>
-              <TouchableOpacity
-                onPress={() => setIsLeaveModal(true)}
-                style={styles.leaveButton}
-                activeOpacity={0.7}
-              >
-                <AntDesign name="arrowleft" size={15} color="white" />
-                <Text style={styles.leaveButtonText}>Leave</Text>
-              </TouchableOpacity>
-
-              <View style={styles.timerContainer}>
-                <Text style={styles.timeLeftText}>Time Left</Text>
-                <Timer
-                  seconds={data.onlineRoomData.seconds}
-                  time={time}
-                  setTime={setTime}
-                  setIsTimeout={setIsTimeout}
-                />
-              </View>
-              <TouchableOpacity
-                onPress={() => setIsInfoModal(true)}
-                style={styles.infoButton}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.leaveButtonText}>Info</Text>
-                <Entypo name="menu" size={15} color="white" />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.contentContainer}>
-              <View style={{ flex: 1, width: "100%" }}>
-                <View style={styles.quizContainer}>
-                  <Text style={styles.quizText}>
-                    {data.onlineRoomData.quizes[quizIndex].mcq}
-                  </Text>
-                </View>
-                <View style={styles.optionsContainer}>
-                  {data.onlineRoomData.quizes[quizIndex].options.map(
-                    (option, index) => {
-                      const isMatched = handleIsMatched(
-                        data.onlineRoomData.quizes[quizIndex]._id,
-                        option._id
-                      );
-                      return (
-                        <TouchableOpacity
-                          style={[
-                            styles.quizOption,
-                            {
-                              backgroundColor: isMatched
-                                ? colors.primary
-                                : colors.grayDark,
-                            },
-                          ]}
-                          key={option._id}
-                          activeOpacity={0.7}
-                          onPress={() =>
-                            handleOptionChange({
-                              _id: data.onlineRoomData.quizes[quizIndex]._id,
-                              option: {
-                                _id: option._id,
-                                isCorrect: option.isCorrect,
-                                mcqId:
-                                  data.onlineRoomData.quizes[quizIndex]._id,
-                              },
-                            })
-                          }
+                  ) : (
+                    <>
+                      {isLeaveError && (
+                        <Text
+                          style={{
+                            color: "#ff8fa3",
+                            fontSize: 17,
+                            fontFamily: fontFamily.Medium,
+                            textAlign: "center",
+                          }}
                         >
-                          <Text
-                            style={[
-                              styles.quizOptionText,
-                              { fontSize: 14, fontFamily: fontFamily.light },
-                            ]}
-                          >
-                            {String.fromCharCode(97 + index)}.
-                          </Text>
-                          <Text style={styles.quizOptionText}>
-                            {option.text}
-                          </Text>
+                          Something went wrong!
+                        </Text>
+                      )}
+                      <Text style={styles.leaveModalTitle}>Are you sure?</Text>
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          alignItems: "center",
+                          gap: 10,
+                        }}
+                      >
+                        <TouchableOpacity
+                          onPress={handleResign}
+                          style={styles.leaveModalButton}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.leaveModalButtonText}>Yes</Text>
                         </TouchableOpacity>
-                      );
-                    }
+                        <TouchableOpacity
+                          onPress={() => setIsLeaveModal(false)}
+                          style={styles.stayModalButton}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.stayModalButtonText}>No</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </>
                   )}
                 </View>
+              </>
+            )}
+            {/* Info Modal */}
+            {isInfoModal && (
+              <View style={styles.leaveModalContainer}>
+                <View
+                  style={{
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 7,
+                    flex: 1,
+                  }}
+                >
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setIsInfoModal(false)}
+                    style={{
+                      backgroundColor: "white",
+                      paddingVertical: 13,
+                      paddingHorizontal: 20,
+                      borderRadius: 6,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: 4,
+                      marginLeft: "auto",
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        color: colors.primary,
+                        fontSize: 14,
+                        fontFamily: fontFamily.Bold,
+                      }}
+                    >
+                      Close
+                    </Text>
+                    <AntDesign name="close" size={16} color={colors.primary} />
+                  </TouchableOpacity>
+                  <View
+                    style={{
+                      backgroundColor: "#fff",
+                      padding: 10,
+                      borderRadius: 10,
+                      gap: 10,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 100,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Regular,
+                          }}
+                        >
+                          Time
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 170,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Medium,
+                          }}
+                        >
+                          <>{data.onlineRoomData.seconds} Seconds</>
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 100,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Regular,
+                          }}
+                        >
+                          Quiz
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 170,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Medium,
+                          }}
+                        >
+                          {data.onlineRoomData.quizes.length}
+                        </Text>
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 100,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Regular,
+                          }}
+                        >
+                          {data.onlineRoomData.quizType === "Topical"
+                            ? "Topic"
+                            : "Year"}
+                        </Text>
+                      </View>
+                      <View
+                        style={{
+                          backgroundColor: colors.grayDark,
+                          borderRadius: 5,
+                          width: 170,
+                          paddingVertical: 10,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "white",
+                            fontSize: 15,
+                            fontFamily: fontFamily.Medium,
+                          }}
+                        >
+                          {data.onlineRoomData.quizType === "Topical" ? (
+                            <>{data.onlineRoomData.topicId.topic}</>
+                          ) : (
+                            <>{data.onlineRoomData.yearId.year}</>
+                          )}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
               </View>
-              <View style={styles.navigatorButtonsContainer}>
+            )}
+            <View style={styles.innerContainer}>
+              {isOpponentResign && (
+                <View
+                  style={{
+                    width: "100%",
+                    height: 50,
+                    backgroundColor: "#fff",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 20,
+                    marginBottom: 10,
+                    gap: 5,
+                    borderRadius: 5,
+                    elevation: 2,
+                  }}
+                >
+                  <Image
+                    source={{ uri: data.opponent.imageUrl }}
+                    alt="Opponent image"
+                    resizeMode="contain"
+                    style={{ width: 35, height: 35, borderRadius: 100 }}
+                  />
+                  <Text
+                    style={{
+                      color: colors.grayDark,
+                      fontFamily: fontFamily.Bold,
+                      fontSize: 15,
+                    }}
+                  >
+                    {data.opponent.fullName}
+                  </Text>
+                  <Text
+                    style={{
+                      color: colors.grayDark,
+                      fontFamily: fontFamily.Regular,
+                      fontSize: 15,
+                    }}
+                  >
+                    Resign the quiz
+                  </Text>
+                </View>
+              )}
+              {isOpponentComplete && (
+                <View
+                  style={{
+                    width: "100%",
+                    height: 50,
+                    backgroundColor: "#fff",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingHorizontal: 20,
+                    marginBottom: 10,
+                    gap: 5,
+                    borderRadius: 5,
+                    elevation: 2,
+                  }}
+                >
+                  <Image
+                    source={{ uri: data.opponent.imageUrl }}
+                    alt="Opponent image"
+                    resizeMode="contain"
+                    style={{ width: 35, height: 35, borderRadius: 100 }}
+                  />
+                  <Text
+                    style={{
+                      color: colors.grayDark,
+                      fontFamily: fontFamily.Bold,
+                      fontSize: 15,
+                    }}
+                  >
+                    {data.opponent.fullName}
+                  </Text>
+                  <Text
+                    style={{
+                      color: colors.grayDark,
+                      fontFamily: fontFamily.Regular,
+                      fontSize: 15,
+                    }}
+                  >
+                    completed in {opponentCompleteTime}
+                  </Text>
+                </View>
+              )}
+              <View style={styles.headerContainer}>
                 <TouchableOpacity
-                  disabled={quizIndex < 1}
-                  onPress={handlePrev}
-                  style={[
-                    styles.navigatorButton,
-                    { opacity: quizIndex < 1 ? 0.7 : 1 },
-                  ]}
+                  onPress={() => setIsLeaveModal(true)}
+                  style={styles.leaveButton}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.navigatorButtonText}>Prev</Text>
+                  <AntDesign name="arrowleft" size={15} color="white" />
+                  <Text style={styles.leaveButtonText}>Leave</Text>
                 </TouchableOpacity>
-                {isLastQuiz ? (
+
+                <View style={styles.timerContainer}>
+                  <Text style={styles.timeLeftText}>Time Left</Text>
+                  <Timer
+                    seconds={data.onlineRoomData.seconds}
+                    time={time}
+                    setTime={setTime}
+                    setIsTimeout={setIsTimeout}
+                  />
+                </View>
+                <TouchableOpacity
+                  onPress={() => setIsInfoModal(true)}
+                  style={styles.infoButton}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.leaveButtonText}>Info</Text>
+                  <Entypo name="menu" size={15} color="white" />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.contentContainer}>
+                <View style={{ flex: 1, width: "100%" }}>
+                  <View style={styles.quizContainer}>
+                    <Text style={styles.quizText}>
+                      {data.onlineRoomData.quizes[quizIndex].mcq}
+                    </Text>
+                  </View>
+                  <View style={styles.optionsContainer}>
+                    {data.onlineRoomData.quizes[quizIndex].options.map(
+                      (option, index) => {
+                        const isMatched = handleIsMatched(
+                          data.onlineRoomData.quizes[quizIndex]._id,
+                          option._id
+                        );
+                        return (
+                          <TouchableOpacity
+                            style={[
+                              styles.quizOption,
+                              {
+                                backgroundColor: isMatched
+                                  ? colors.primary
+                                  : colors.grayDark,
+                              },
+                            ]}
+                            key={option._id}
+                            activeOpacity={0.7}
+                            onPress={() =>
+                              handleOptionChange({
+                                _id: data.onlineRoomData.quizes[quizIndex]._id,
+                                option: {
+                                  _id: option._id,
+                                  isCorrect: option.isCorrect,
+                                  mcqId:
+                                    data.onlineRoomData.quizes[quizIndex]._id,
+                                },
+                              })
+                            }
+                          >
+                            <Text
+                              style={[
+                                styles.quizOptionText,
+                                { fontSize: 14, fontFamily: fontFamily.light },
+                              ]}
+                            >
+                              {String.fromCharCode(97 + index)}.
+                            </Text>
+                            <Text style={styles.quizOptionText}>
+                              {option.text}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      }
+                    )}
+                  </View>
+                </View>
+                <View style={styles.navigatorButtonsContainer}>
                   <TouchableOpacity
-                    onPress={handleSubmit}
+                    disabled={quizIndex < 1}
+                    onPress={handlePrev}
                     style={[
                       styles.navigatorButton,
-                      { backgroundColor: colors.primary },
+                      { opacity: quizIndex < 1 ? 0.7 : 1 },
                     ]}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.navigatorButtonText}>Submit</Text>
+                    <Text style={styles.navigatorButtonText}>Prev</Text>
                   </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={handleNext}
-                    style={styles.navigatorButton}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.navigatorButtonText}>Next</Text>
-                  </TouchableOpacity>
-                )}
+                  {isLastQuiz ? (
+                    <TouchableOpacity
+                      onPress={handleSubmit}
+                      style={[
+                        styles.navigatorButton,
+                        { backgroundColor: colors.primary },
+                      ]}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.navigatorButtonText}>Submit</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={handleNext}
+                      style={styles.navigatorButton}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.navigatorButtonText}>Next</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
             </View>
           </View>
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );

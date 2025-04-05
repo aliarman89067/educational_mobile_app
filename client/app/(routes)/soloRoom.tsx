@@ -15,6 +15,7 @@ import { fontFamily } from "@/constants/fonts";
 import Timer from "@/components/timer";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
+import { useUser } from "@clerk/clerk-expo";
 
 const SoloRoom = () => {
   const { roomId } = useLocalSearchParams();
@@ -26,6 +27,7 @@ const SoloRoom = () => {
   const [isLeaveError, setIsLeaveError] = useState(false);
   const [isLeaveLoading, setIsLeaveLoading] = useState(false);
   const [isTimeout, setIsTimeout] = useState(false);
+  const { user } = useUser();
 
   const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const pathname = usePathname();
@@ -212,7 +214,7 @@ const SoloRoom = () => {
           type: "solo-room",
           mcqs,
           states: sortedQuizId ?? [],
-          userId: "",
+          userId: user ? user.id : "",
           time: completeTime,
         }
       );

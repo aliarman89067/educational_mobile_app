@@ -9,8 +9,6 @@ import {
 } from "react-native";
 import React from "react";
 import { colors } from "@/constants/colors";
-import Entypo from "@expo/vector-icons/Entypo";
-import { useClerk, useUser } from "@clerk/clerk-expo";
 import { fontFamily } from "@/constants/fonts";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -21,41 +19,14 @@ import {
   soloQuizImage,
   soloQuizSideImage,
 } from "@/constants/images";
-import * as Linking from "expo-linking";
 import { router } from "expo-router";
+import Navbar from "@/components/navbar";
 
 const Home = () => {
-  const { user } = useUser();
-  const { signOut } = useClerk();
-
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      Linking.openURL(Linking.createURL("/"));
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-    }
-  };
-
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.mainContainer}>
-        <View style={styles.tabBarContainer}>
-          <TouchableOpacity activeOpacity={0.7}>
-            <Entypo name="menu" size={22} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={handleSignOut}
-            activeOpacity={0.7}
-            style={styles.profileContainer}
-          >
-            <Image
-              source={{ uri: user?.imageUrl }}
-              alt="User Profile Image"
-              style={styles.userProfileImage}
-            />
-          </TouchableOpacity>
-        </View>
+        <Navbar />
         <ScrollView>
           <View style={styles.bodyContainer}>
             <Text style={styles.playText}>Let&apos;s Play</Text>
@@ -163,26 +134,6 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
-  },
-  tabBarContainer: {
-    backgroundColor: colors.primary,
-    flexDirection: "row",
-    paddingHorizontal: 10,
-    alignItems: "center",
-    justifyContent: "space-between",
-    height: 60,
-  },
-  profileContainer: {
-    width: 30,
-    height: 30,
-    borderRadius: 100,
-    overflow: "hidden",
-  },
-  userProfileImage: {
-    width: "100%",
-    height: "100%",
-    resizeMode: "cover",
-    borderRadius: 100,
   },
   bodyContainer: {
     gap: 5,

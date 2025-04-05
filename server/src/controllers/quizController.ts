@@ -6,6 +6,7 @@ import SoloRoomModel from "../models/SoloRoom";
 import HistoryModel from "../models/History";
 import OnlineRoomModel from "../models/OnlineRoom";
 import UserModel from "../models/User";
+import OnlineHistoryModel from "../models/OnlineHistory";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -123,6 +124,31 @@ export const getSoloRoom = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const reactiveSoloRoom = async (req: Request, res: Response) => {
+  try {
+    const { soloRoomId } = req.body;
+    if (!soloRoomId) {
+      res
+        .status(404)
+        .json({ success: false, message: "Solo Room Id not exist!" });
+      return;
+    }
+    const soloRoomDoc = await SoloRoomModel.findByIdAndUpdate(
+      soloRoomId,
+      { isAlive: true },
+      { new: true }
+    );
+    res.status(200).json({ success: true, data: soloRoomDoc?._id });
+  } catch (error: any) {
+    console.log(error);
+    res
+      .status(500)
+      .json({
+        message: `Failed to reactive soloroom ${error.message ?? error}`,
+      });
   }
 };
 
@@ -332,5 +358,102 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: `Failed to get online room ${error.message ?? error}` });
+  }
+};
+
+export const getOnlineResult = async (req: Request, res: Response) => {
+  const { resultId, roomId } = req.params;
+  try {
+    if (!resultId || !roomId) {
+      res.status(404).json({
+        success: false,
+        message: "Result Id or Room Id is not exist!",
+      });
+      return;
+    }
+    const findOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
+      {
+        _id: roomId,
+      },
+      {
+        isEnded: true,
+      },
+      {
+        new: true,
+      }
+    );
+    if (!findOnlineRoom) {
+      res.status(400).json({ success: false, message: "Room is expired!" });
+      return;
+    }
+    const findOpponentHistory = await OnlineHistoryModel.findOne({
+      roomId,
+      _id: { $ne: resultId },
+    })
+      .populate({ path: "mcqs" })
+      .populate({
+        path: "roomId",
+        select: "_id subjectId yearId topicId quizType",
+        populate: {
+          path: "subjectId yearId topicId",
+          select: "subject year topic",
+        },
+      });
+    const myHistory = await OnlineHistoryModel.findOne({
+      roomId,
+      _id: resultId,
+    })
+      .populate({ path: "mcqs" })
+      .populate({
+        path: "roomId",
+        select: "_id subjectId yearId topicId quizType",
+        populate: {
+          path: "subjectId yearId topicId",
+          select: "subject year topic",
+        },
+      });
+    // const myUser = await UserModel.findOne({
+    //   clerkId: myHistory.user,
+    // });
+    let opponentUser;
+    if (findOnlineRoom.user1 === myHistory?.user) {
+      opponentUser = await UserModel.findOne({
+        clerkId: findOnlineRoom.user2,
+      }).select("fullName imageUrl clerkId");
+    } else {
+      opponentUser = await UserModel.findOne({
+        clerkId: findOnlineRoom.user1,
+      }).select("fullName imageUrl clerkId");
+    }
+
+    if (findOpponentHistory) {
+      const resignation = findOnlineRoom.resignation ?? "";
+      res.status(200).json({
+        success: true,
+        isPending: false,
+        data: {
+          myHistory,
+          opponentUser,
+          opponentHistory: findOpponentHistory,
+          resignation,
+        },
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        isPending: true,
+        data: {
+          myData: myHistory,
+          opponentUser,
+          time: {
+            fullTime: findOnlineRoom.seconds,
+            timeTaken: myHistory?.time,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };

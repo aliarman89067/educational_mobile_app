@@ -12,6 +12,7 @@ import { Server } from "socket.io";
 import quizRoutes from "./routes/quizRoute";
 import subjectRoute from "./routes/subjectRoute";
 import userRoute from "./routes/userRoute";
+import historyRoute from "./routes/historyRoute";
 
 import "./models/Topic";
 import "./models/Year";
@@ -286,6 +287,44 @@ io.on("connection", (socket) => {
       console.log("This payload is not correct");
     }
   };
+  const getOnlineHistory = async (data: any) => {
+    let timeoutId;
+    const { resultId, roomId } = data;
+    if (resultId && roomId) {
+      const getOpponentHistory = async () => {
+        const findOpponentHistory = await OnlineHistoryModel.findOne({
+          roomId,
+          _id: { $ne: resultId },
+        })
+          .populate({ path: "mcqs" })
+          .populate({
+            path: "roomId",
+            select: "_id subjectId yearId topicId quizType",
+            populate: {
+              path: "subjectId yearId topicId",
+              select: "subject year topic",
+            },
+          });
+        if (findOpponentHistory) {
+          return findOpponentHistory;
+        } else {
+          return new Promise((resolve) => {
+            timeoutId = setTimeout(() => resolve(getOpponentHistory()), 1000);
+          });
+        }
+      };
+      clearTimeout(timeoutId);
+      const getOnlineHistoryRes = await getOpponentHistory();
+
+      if (getOnlineHistoryRes) {
+        socket.emit("get-online-history-data", getOnlineHistoryRes);
+      } else {
+        socket.emit("get-online-history-error", { error: "not-found" });
+      }
+    } else {
+      socket.emit("get-online-history-error", { error: "payload-error" });
+    }
+  };
 
   const leaveByResign = async (data: any) => {
     const { completeTime, mcqs, roomId, selectedStates, userId } = data;
@@ -349,12 +388,14 @@ io.on("connection", (socket) => {
   socket.on("online-submit", submitOnlineRoom);
   socket.on("online-resign-submit", onlineResignSubmit);
   socket.on("online-resign-by-leave", leaveByResign);
+  socket.on("get-online-history", getOnlineHistory);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
-    socket.on("online-submit", submitOnlineRoom);
-    socket.on("online-resign-submit", onlineResignSubmit);
-    socket.on("online-resign-by-leave", leaveByResign);
+    socket.off("online-submit", submitOnlineRoom);
+    socket.off("online-resign-submit", onlineResignSubmit);
+    socket.off("online-resign-by-leave", leaveByResign);
+    socket.off("get-online-history", getOnlineHistory);
   });
 });
 
@@ -373,6 +414,7 @@ app.use(morgan("common"));
 app.use("/quiz", quizRoutes);
 app.use("/subject", subjectRoute);
 app.use("/user", userRoute);
+app.use("/history", historyRoute);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Hello World" });

@@ -188,6 +188,7 @@ const MakeQuiz = () => {
       !user ||
       !user.id ||
       !selectedTime ||
+      !sessionId ||
       !selectedTime.key
     ) {
       ToastAndroid.showWithGravity(

@@ -27,15 +27,15 @@ const Layout = () => {
 
   axios.defaults.baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
   return (
-    <ClerkProvider tokenCache={tokenCache}>
-      <SocketProvider>
+    <SocketProvider>
+      <ClerkProvider tokenCache={tokenCache}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(routes)" />
         </Stack>
-      </SocketProvider>
-    </ClerkProvider>
+      </ClerkProvider>
+    </SocketProvider>
   );
 };
 
