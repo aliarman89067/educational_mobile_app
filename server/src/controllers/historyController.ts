@@ -4,51 +4,80 @@ import subjectModel from "../models/Subject";
 import topicModel from "../models/Topic";
 import yearModel from "../models/Year";
 import HistoryModel from "../models/History";
+import OnlineHistoryModel from "../models/OnlineHistory";
 
 export const getAllHistory = async (req: Request, res: Response) => {
   const { userId } = req.params;
   try {
     const historyData: any = {};
-    const onlineRooms = await OnlineRoomModel.find({
-      $or: [{ user1: userId }, { user2: userId }],
+    const onlineHistory = await OnlineHistoryModel.find({
+      user: userId,
     })
-      .select(
-        "_id subjectId subject topicId yearId quizType resignation seconds createdAt"
-      )
-      .populate({ path: "subjectId", select: "_id subject" })
-      .populate({ path: "yearId", select: "_id year" })
-      .populate({ path: "topicId", select: "_id topic" });
+      .sort({ createdAt: -1 })
+      .populate({
+        path: "roomId",
+        populate: [
+          { path: "subjectId", select: "_id subject" },
+          { path: "yearId", select: "_id year" },
+          { path: "topicId", select: "_id topic" },
+        ],
+      });
 
-    const formattedOnlineRooms = onlineRooms.map((room) => {
-      const subject = room.subjectId as unknown as {
+    const formattedOnlineHistory = onlineHistory.map((history) => {
+      const room = history.roomId as unknown as {
         _id: string;
-        subject: string;
-      };
-      const year = room.yearId as unknown as {
-        _id: string;
-        year: string;
-      };
-      const topic = room.topicId as unknown as {
-        _id: string;
-        topic: string;
+        subjectId: {
+          _id: string;
+          subject: string;
+        };
+        yearId: {
+          _id: string;
+          year: string;
+        };
+        topicId: {
+          _id: string;
+          topic: string;
+        };
+        quizType: "Topical" | "Yearly";
+        createdAt: string;
+        user1: string;
+        user2: string;
+        quizIdAndValue1: {
+          _id: string;
+          isCorrect: string;
+          selected: string;
+        }[];
+        quizIdAndValue2: {
+          _id: string;
+          isCorrect: string;
+          selected: string;
+        }[];
+        resignation: string;
+        quizes: string[];
       };
 
       return {
+        historyId: history._id,
         roomId: room._id,
-        subjectId: subject._id,
-        subjectName: subject.subject,
-        topicId: room.quizType === "Topical" ? topic._id : "",
-        topicName: room.quizType === "Topical" ? topic.topic : "",
-        yearId: room.quizType === "Yearly" ? year._id : "",
-        yearName: room.quizType === "Yearly" ? year.year : "",
+        subjectId: room.subjectId._id,
+        subjectName: room.subjectId.subject,
+        topicId: room.quizType === "Topical" ? room.topicId._id : "",
+        topicName: room.quizType === "Topical" ? room.topicId.topic : "",
+        yearId: room.quizType === "Yearly" ? room.yearId._id : "",
+        yearName: room.quizType === "Yearly" ? room.yearId.year : "",
         date: room.createdAt,
         quizType: room.quizType,
+        quizIdAndValue:
+          room.user1 === userId ? room.quizIdAndValue1 : room.quizIdAndValue2,
+        opponentQuizIdAndValue:
+          room.user1 === userId ? room.quizIdAndValue2 : room.quizIdAndValue1,
         resignation: room.resignation,
+        mcqLength: room.quizes.length,
       };
     });
 
     const soloHistory = await HistoryModel.find({ user: userId })
-      .select("_id createdAt")
+      .select("_id createdAt quizIdAndValue mcqs")
       .populate({
         path: "soloRoom",
         populate: [
@@ -88,10 +117,11 @@ export const getAllHistory = async (req: Request, res: Response) => {
         yearName: soloRoom.quizType === "Yearly" ? soloRoom.yearId.year : "",
         quizType: soloRoom.quizType,
         date: history.createdAt,
+        quizIdAndValue: history.quizIdAndValue,
+        mcqLength: history.mcqs.length,
       };
     });
-
-    historyData["onlineQuizes"] = formattedOnlineRooms;
+    historyData["onlineQuizes"] = formattedOnlineHistory;
     historyData["soloQuizes"] = formattedSoloHistory;
     res.status(200).json(historyData);
   } catch (error: any) {

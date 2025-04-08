@@ -1,12 +1,5 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Animated,
-  Easing,
-} from "react-native";
-import React, { useEffect, useRef, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState } from "react";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";

@@ -33,7 +33,12 @@ dotEnv.config();
 
 const app = express();
 const server = createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
 
 io.on("connection", (socket) => {
   const createRoom = async (data: any) => {

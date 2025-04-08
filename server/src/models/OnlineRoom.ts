@@ -10,6 +10,20 @@ const onlineRoomSchema = new Schema(
     quizes: [{ type: Schema.Types.ObjectId, required: true, ref: "mcqs" }],
     user1: { type: String },
     user2: { type: String },
+    quizIdAndValue1: [
+      {
+        _id: { type: String, required: true },
+        isCorrect: { type: Boolean, required: true },
+        selected: { type: String, required: true },
+      },
+    ],
+    quizIdAndValue2: [
+      {
+        _id: { type: String, required: true },
+        isCorrect: { type: Boolean, required: true },
+        selected: { type: String, required: true },
+      },
+    ],
     user1SessionId: { type: String },
     user2SessionId: { type: String },
     isUser1Alive: { type: Boolean, required: true },

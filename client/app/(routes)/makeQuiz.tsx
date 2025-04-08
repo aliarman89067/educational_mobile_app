@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { colors } from "@/constants/colors";
-import { router, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams, usePathname } from "expo-router";
 import BackButton from "@/components/backButton";
 import { SelectDropdown, DropdownData } from "expo-select-dropdown";
 import axios from "axios";
@@ -61,7 +61,44 @@ const MakeQuiz = () => {
   const [dataYears, setDataYears] = useState<
     DropdownData<string, string>[] | null
   >(null);
-  const [dataTime] = useState<DropdownData<string, string>[] | null>(null);
+  const [dataTime] = useState<DropdownData<string, string>[]>([
+    {
+      key: "no-limit",
+      value: "No Limit",
+    },
+    {
+      key: "30",
+      value: "30 Seconds",
+    },
+    {
+      key: "40",
+      value: "40 Seconds",
+    },
+    {
+      key: "50",
+      value: "50 Seconds",
+    },
+    {
+      key: "60",
+      value: "60 Seconds",
+    },
+    {
+      key: "120",
+      value: "120 Seconds",
+    },
+    {
+      key: "180",
+      value: "180 Seconds",
+    },
+    {
+      key: "240",
+      value: "240 Seconds",
+    },
+    {
+      key: "300",
+      value: "300 Seconds",
+    },
+  ]);
   const [selectedTime, setSelectedTime] = useState<
     DropdownData<string, string>
   >({
@@ -95,6 +132,7 @@ const MakeQuiz = () => {
     imageUrl: string;
   }>(null);
   const [onlineRoomId, setOnlineRoomId] = useState("");
+  const pathname = usePathname();
 
   useEffect(() => {
     const loadQuiz = async () => {
@@ -144,7 +182,7 @@ const MakeQuiz = () => {
       }
     };
     loadQuiz();
-  }, [selectedCategory]);
+  }, [selectedCategory, pathname, router]);
   const handleSoloPlay = async () => {
     if (
       !selectedSubject ||
@@ -180,10 +218,11 @@ const MakeQuiz = () => {
       setIsLoading(false);
     }
   };
+  console.log(sessionId);
   const handleOnlinePlay = () => {
     if (
       !selectedSubject ||
-      !selectedSubject.key ||
+      !selectedSubject?.key ||
       (!selectedTopic && !selectedYear) ||
       !user ||
       !user.id ||

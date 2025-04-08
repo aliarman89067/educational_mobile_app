@@ -11,33 +11,41 @@ const SocketContext = createContext<Props | undefined>(undefined);
 let socketInstance: Socket | null = null;
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
-  const socketIo = socketInstance || io(process.env.EXPO_PUBLIC_API_BASE_URL);
   const { addSessionId } = useSocketStore();
 
   useEffect(() => {
-    socketIo.on("connect", () => {
+    if (!socketInstance) {
+      socketInstance = io(process.env.EXPO_PUBLIC_API_BASE_URL, {
+        transports: ["websocket"],
+      });
+    }
+
+    const socketIo = socketInstance;
+
+    const handleConnect = () => {
       addSessionId(socketIo.id);
-    });
+    };
+
+    socketIo.on("connect", handleConnect);
+
     return () => {
-      socketIo.off("connect");
+      socketIo.off("connect", handleConnect);
     };
   }, []);
 
-  if (!socketInstance) {
-    socketInstance = socketIo;
-  }
+  if (!socketInstance) return null;
 
   return (
-    <SocketContext.Provider value={{ socketIo }}>
+    <SocketContext.Provider value={{ socketIo: socketInstance }}>
       {children}
     </SocketContext.Provider>
   );
 };
-
-export const useSocket = (): Props => {
+export const useSocket = () => {
   const context = useContext(SocketContext);
   if (!context) {
     throw new Error("Context must be wrapped within provider");
   }
+
   return context;
 };

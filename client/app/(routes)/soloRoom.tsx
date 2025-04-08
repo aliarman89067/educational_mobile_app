@@ -1,5 +1,6 @@
 import {
   ActivityIndicator,
+  Dimensions,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -163,14 +164,6 @@ const SoloRoom = () => {
 
   const handleSubmit = async () => {
     if (!data) return;
-    // if (!selectedOptionIds || selectedOptionIds?.length < data?.quizes.length) {
-    //   ToastAndroid.showWithGravity(
-    //     "Please Complete all Quiz",
-    //     ToastAndroid.SHORT,
-    //     ToastAndroid.CENTER
-    //   );
-    //   return;
-    // }
 
     let completeTime: number;
 
@@ -433,6 +426,7 @@ const SoloRoom = () => {
                       </Text>
                     </View>
                   </View>
+
                   <View
                     style={{
                       flexDirection: "row",

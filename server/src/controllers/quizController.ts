@@ -129,7 +129,7 @@ export const getSoloRoom = async (req: Request, res: Response) => {
 
 export const reactiveSoloRoom = async (req: Request, res: Response) => {
   try {
-    const { soloRoomId } = req.body;
+    const { soloRoomId, historyId } = req.body;
     if (!soloRoomId) {
       res
         .status(404)
@@ -138,17 +138,15 @@ export const reactiveSoloRoom = async (req: Request, res: Response) => {
     }
     const soloRoomDoc = await SoloRoomModel.findByIdAndUpdate(
       soloRoomId,
-      { isAlive: true },
+      { isAlive: true, isHistoryId: historyId },
       { new: true }
     );
     res.status(200).json({ success: true, data: soloRoomDoc?._id });
   } catch (error: any) {
     console.log(error);
-    res
-      .status(500)
-      .json({
-        message: `Failed to reactive soloroom ${error.message ?? error}`,
-      });
+    res.status(500).json({
+      message: `Failed to reactive soloroom ${error.message ?? error}`,
+    });
   }
 };
 
@@ -182,20 +180,34 @@ export const submitSoloRoom = async (req: Request, res: Response) => {
       return;
     }
 
-    await SoloRoomModel.findByIdAndUpdate(
+    const history = await SoloRoomModel.findByIdAndUpdate(
       roomId,
       { isAlive: false },
       { new: true }
     );
-    const newHistory = await HistoryModel.create({
-      mcqs: mcqs,
-      quizIdAndValue: states,
-      roomType: type,
-      soloRoom: roomId,
-      user: userId,
-      time,
-    });
-    res.status(201).json({ success: true, data: newHistory._id });
+    let historyId;
+    if (history?.isHistoryId) {
+      await HistoryModel.findByIdAndUpdate(history.isHistoryId, {
+        mcqs: mcqs,
+        quizIdAndValue: states,
+        roomType: type,
+        soloRoom: roomId,
+        user: userId,
+        time,
+      });
+      historyId = history.isHistoryId;
+    } else {
+      const newHistory = await HistoryModel.create({
+        mcqs: mcqs,
+        quizIdAndValue: states,
+        roomType: type,
+        soloRoom: roomId,
+        user: userId,
+        time,
+      });
+      historyId = newHistory._id;
+    }
+    res.status(201).json({ success: true, data: historyId });
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Something went wrong" });
@@ -371,21 +383,6 @@ export const getOnlineResult = async (req: Request, res: Response) => {
       });
       return;
     }
-    const findOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
-      {
-        _id: roomId,
-      },
-      {
-        isEnded: true,
-      },
-      {
-        new: true,
-      }
-    );
-    if (!findOnlineRoom) {
-      res.status(400).json({ success: false, message: "Room is expired!" });
-      return;
-    }
     const findOpponentHistory = await OnlineHistoryModel.findOne({
       roomId,
       _id: { $ne: resultId },
@@ -412,9 +409,44 @@ export const getOnlineResult = async (req: Request, res: Response) => {
           select: "subject year topic",
         },
       });
-    // const myUser = await UserModel.findOne({
-    //   clerkId: myHistory.user,
-    // });
+
+    const findOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
+      {
+        _id: roomId,
+      },
+      {
+        isEnded: true,
+      },
+      {
+        new: true,
+      }
+    );
+    if (findOnlineRoom?.user1 === myHistory?.user) {
+      await OnlineRoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+        },
+        {
+          quizIdAndValue1: myHistory?.quizIdAndValue,
+          quizIdAndValue2: findOpponentHistory?.quizIdAndValue,
+        }
+      );
+    } else {
+      await OnlineRoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+        },
+        {
+          quizIdAndValue2: myHistory?.quizIdAndValue,
+          quizIdAndValue1: findOpponentHistory?.quizIdAndValue,
+        }
+      );
+    }
+    if (!findOnlineRoom) {
+      res.status(400).json({ success: false, message: "Room is expired!" });
+      return;
+    }
+
     let opponentUser;
     if (findOnlineRoom.user1 === myHistory?.user) {
       opponentUser = await UserModel.findOne({

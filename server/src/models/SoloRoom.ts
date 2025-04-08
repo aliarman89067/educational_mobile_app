@@ -10,6 +10,7 @@ const soloRoomSchema = new Schema(
     user: { type: Schema.Types.ObjectId, ref: "users" },
     isAlive: { type: Boolean, required: true },
     seconds: { type: String, required: true },
+    isHistoryId: { type: String },
   },
   {
     timestamps: true,

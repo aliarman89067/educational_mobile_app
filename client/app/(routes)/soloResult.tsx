@@ -211,6 +211,7 @@ const SoloResult = () => {
         "/quiz/reactive-solo-room",
         {
           soloRoomId: data?.soloRoom._id,
+          historyId
         }
       );
       router.replace({
