@@ -388,12 +388,33 @@ io.on("connection", (socket) => {
       // TODO:Handling Error
     }
   };
+  const handleOpponentIndex = async (data: any) => {
+    const { index, roomId, userId } = data;
+    if (!index || !roomId || !userId) {
+      throw new Error("Payload is not correct");
+      return;
+    }
+    const findOnlineRoom = await OnlineRoomModel.findById(roomId);
+    if (!findOnlineRoom) {
+      throw new Error("Online room not found!");
+    }
+    if (findOnlineRoom.user1 === userId) {
+      io.to(findOnlineRoom.user2SessionId!!).emit("opponent-send-index", {
+        index,
+      });
+    } else if (findOnlineRoom.user2 === userId) {
+      io.to(findOnlineRoom.user1SessionId!!).emit("opponent-send-index", {
+        index,
+      });
+    }
+  };
 
   socket.on("create-online-room", createRoom);
   socket.on("online-submit", submitOnlineRoom);
   socket.on("online-resign-submit", onlineResignSubmit);
   socket.on("online-resign-by-leave", leaveByResign);
   socket.on("get-online-history", getOnlineHistory);
+  socket.on("opponent-quiz-index", handleOpponentIndex);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
@@ -401,6 +422,7 @@ io.on("connection", (socket) => {
     socket.off("online-resign-submit", onlineResignSubmit);
     socket.off("online-resign-by-leave", leaveByResign);
     socket.off("get-online-history", getOnlineHistory);
+    socket.off("opponent-quiz-index", handleOpponentIndex);
   });
 });
 

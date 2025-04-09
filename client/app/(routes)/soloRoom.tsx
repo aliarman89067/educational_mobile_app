@@ -28,6 +28,7 @@ const SoloRoom = () => {
   const [isLeaveError, setIsLeaveError] = useState(false);
   const [isLeaveLoading, setIsLeaveLoading] = useState(false);
   const [isTimeout, setIsTimeout] = useState(false);
+  const [isNextClicked, setIsNextClicked] = useState(false);
   const { user } = useUser();
 
   const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -116,6 +117,7 @@ const SoloRoom = () => {
       }
       return updatedState;
     });
+    setIsNextClicked(true);
   };
 
   const handleIsMatched = (_id: string, optionId: string): boolean => {
@@ -143,6 +145,7 @@ const SoloRoom = () => {
     if (data && data?.quizes && data?.quizes.length > 0) {
       if (quizIndex < data.quizes.length - 1) {
         setQuizIndex(quizIndex + 1);
+        setIsNextClicked(false);
       }
     }
   };
@@ -616,32 +619,36 @@ const SoloRoom = () => {
               </View>
               <View style={styles.navigatorButtonsContainer}>
                 <TouchableOpacity
-                  disabled={quizIndex < 1}
-                  onPress={handlePrev}
-                  style={[
-                    styles.navigatorButton,
-                    { opacity: quizIndex < 1 ? 0.7 : 1 },
-                  ]}
+                  onPress={isLastQuiz ? handleSubmit : handleNext}
+                  style={[styles.navigatorButton]}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.navigatorButtonText}>Prev</Text>
+                  <Text style={styles.navigatorButtonText}>Skip</Text>
                 </TouchableOpacity>
                 {isLastQuiz ? (
                   <TouchableOpacity
                     onPress={handleSubmit}
                     style={[
                       styles.navigatorButton,
-                      { backgroundColor: colors.primary },
+                      {
+                        backgroundColor: colors.primary,
+                        opacity: isNextClicked ? 1 : 0.7,
+                      },
                     ]}
                     activeOpacity={0.7}
+                    disabled={!isNextClicked}
                   >
                     <Text style={styles.navigatorButtonText}>Submit</Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
                     onPress={handleNext}
-                    style={styles.navigatorButton}
+                    style={[
+                      styles.navigatorButton,
+                      { opacity: isNextClicked ? 1 : 0.7 },
+                    ]}
                     activeOpacity={0.7}
+                    disabled={!isNextClicked}
                   >
                     <Text style={styles.navigatorButtonText}>Next</Text>
                   </TouchableOpacity>

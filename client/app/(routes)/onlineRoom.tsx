@@ -33,6 +33,8 @@ const OnlineRoom = () => {
   const [isLeaveLoading, setIsLeaveLoading] = useState(false);
   const [isTimeout, setIsTimeout] = useState(false);
   const [isUserMessage, setIsUserMessage] = useState(false);
+  const [opponentQuizIndex, setOpponentQuizIndex] = useState(0);
+  const [isNextClicked, setIsNextClicked] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState<null | {
     onlineRoomData: {
@@ -176,6 +178,9 @@ const OnlineRoom = () => {
     };
     socketIo.on("opponent-resign", resignResponseListener);
     socketIo.on("complete-resign-response", completeResignListener);
+    socketIo.on("opponent-send-index", (data: any) => {
+      setOpponentQuizIndex(data.index);
+    });
     return () => {
       socketIo.off("opponent-resign", resignResponseListener);
       socketIo.off("complete-resign-response", completeResignListener);
@@ -333,6 +338,7 @@ const OnlineRoom = () => {
       }
       return updatedState;
     });
+    setIsNextClicked(true);
   };
 
   const handleSubmit = () => {
@@ -428,8 +434,14 @@ const OnlineRoom = () => {
     ) {
       if (quizIndex < data.onlineRoomData.quizes.length - 1) {
         setQuizIndex(quizIndex + 1);
+        socketIo.emit("opponent-quiz-index", {
+          index: quizIndex + 1,
+          roomId: onlineRoomId,
+          userId,
+        });
       }
     }
+    setIsNextClicked(false);
   };
 
   const width = Dimensions.get("window").width;
@@ -437,12 +449,10 @@ const OnlineRoom = () => {
   const getOpponentPer = () => {
     if (!data?.onlineRoomData.quizes.length) return 0;
 
-    const progressRatio = quizIndex / data?.onlineRoomData.quizes.length;
+    const progressRatio =
+      opponentQuizIndex / data?.onlineRoomData.quizes.length;
     const offset = progressRatio * width;
-    if (quizIndex === data?.onlineRoomData.quizes.length - 2) {
-      return offset - 15;
-    }
-    return offset;
+    return offset - 30;
   };
 
   const isLastQuiz =
@@ -450,6 +460,11 @@ const OnlineRoom = () => {
     data.onlineRoomData.quizes &&
     data.onlineRoomData.quizes.length &&
     quizIndex >= data.onlineRoomData.quizes.length - 1;
+
+  const isNextDisabled =
+    selectedOptionIds && selectedOptionIds[quizIndex] === null;
+
+  console.log(isNextDisabled);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -740,44 +755,50 @@ const OnlineRoom = () => {
                 </View>
               </View>
             )}
-            <View
-              style={{
-                width: width,
-                paddingHorizontal: 18,
-              }}
-            >
+            {!isOpponentComplete && !isOpponentResign && (
               <View
                 style={{
-                  width: "100%",
-                  height: 4,
-                  borderRadius: 50,
-                  backgroundColor: colors.primary,
-                  position: "relative",
-                  marginTop: 20,
-                  marginBottom: 10,
+                  width: width,
+                  paddingHorizontal: 18,
                 }}
               >
                 <View
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 100,
-                    backgroundColor: colors.grayDark,
-                    position: "absolute",
-                    top: -20,
-                    left: getOpponentPer(),
-                    overflow: "hidden",
+                    width: "100%",
+                    height: 4,
+                    borderRadius: 50,
+                    backgroundColor: colors.primary,
+                    position: "relative",
+                    marginTop: 20,
+                    marginBottom: 10,
                   }}
                 >
-                  <Image
-                    source={{ uri: data.opponent.imageUrl }}
-                    alt="Opponent image url"
-                    resizeMode="contain"
-                    style={{ width: "100%", height: "100%", borderRadius: 100 }}
-                  />
+                  <View
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 100,
+                      backgroundColor: colors.grayDark,
+                      position: "absolute",
+                      top: -20,
+                      left: getOpponentPer(),
+                      overflow: "hidden",
+                    }}
+                  >
+                    <Image
+                      source={{ uri: data.opponent.imageUrl }}
+                      alt="Opponent image url"
+                      resizeMode="contain"
+                      style={{
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 100,
+                      }}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
+            )}
             <View style={styles.innerContainer}>
               {isOpponentResign && (
                 <View
@@ -945,31 +966,37 @@ const OnlineRoom = () => {
                   </View>
                 </View>
                 <View style={styles.navigatorButtonsContainer}>
-                  {!isLastQuiz && (
-                    <TouchableOpacity
-                      onPress={handleNext}
-                      style={[styles.navigatorButton]}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.navigatorButtonText}>Skip</Text>
-                    </TouchableOpacity>
-                  )}
+                  <TouchableOpacity
+                    onPress={isLastQuiz ? handleSubmit : handleNext}
+                    style={[styles.navigatorButton]}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.navigatorButtonText}>Skip</Text>
+                  </TouchableOpacity>
                   {isLastQuiz ? (
                     <TouchableOpacity
                       onPress={handleSubmit}
                       style={[
                         styles.navigatorButton,
-                        { backgroundColor: colors.primary },
+                        {
+                          backgroundColor: colors.primary,
+                          opacity: isNextClicked ? 1 : 0.7,
+                        },
                       ]}
                       activeOpacity={0.7}
+                      disabled={!isNextClicked}
                     >
                       <Text style={styles.navigatorButtonText}>Submit</Text>
                     </TouchableOpacity>
                   ) : (
                     <TouchableOpacity
                       onPress={handleNext}
-                      style={styles.navigatorButton}
+                      style={[
+                        styles.navigatorButton,
+                        { opacity: isNextClicked ? 1 : 0.7 },
+                      ]}
                       activeOpacity={0.7}
+                      disabled={!isNextClicked}
                     >
                       <Text style={styles.navigatorButtonText}>Next</Text>
                     </TouchableOpacity>
