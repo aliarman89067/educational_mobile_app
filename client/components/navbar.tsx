@@ -11,6 +11,7 @@ import { router } from "expo-router";
 const Navbar = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -21,10 +22,7 @@ const Navbar = () => {
   };
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => router.push("/profile")}
-        activeOpacity={0.7}
-      >
+      <TouchableOpacity onPress={handleSignOut} activeOpacity={0.7}>
         <Image
           source={{ uri: user?.imageUrl }}
           alt={`${user?.fullName} profile image`}

@@ -1,29 +1,10 @@
-import {
-  Image,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import React from "react";
-import { colors } from "@/constants/colors";
-import { fontFamily } from "@/constants/fonts";
-import { LinearGradient } from "expo-linear-gradient";
-import {
-  joinQuizImage,
-  joinQuizSideImage,
-  onlineQuizImage,
-  onlineQuizSideImage,
-  soloQuizImage,
-  soloQuizSideImage,
-} from "@/constants/images";
-import { router } from "expo-router";
 import Navbar from "@/components/navbar";
 import Ad from "@/components/ad";
 import GameHeaders from "@/components/GameHeaders";
 import HomeFriends from "@/components/homeFriends";
+import HomeHistory from "@/components/homeHistory";
 
 const Home = () => {
   return (
@@ -33,6 +14,7 @@ const Home = () => {
         <Ad />
         <GameHeaders />
         <HomeFriends />
+        <HomeHistory />
       </ScrollView>
     </View>
   );

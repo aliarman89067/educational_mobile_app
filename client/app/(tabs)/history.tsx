@@ -1,4 +1,5 @@
 import {
+  ActivityIndicator,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -58,6 +59,7 @@ type DataType = {
 
 const History = () => {
   const [data, setData] = useState<DataType | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const pathname = usePathname();
   const { user, isLoaded } = useUser();
@@ -68,6 +70,7 @@ const History = () => {
     setData(null);
     const loadHistory = async () => {
       try {
+        setIsLoading(true);
         const { data: historyData } = await axios.get(
           `/history/all/${user.id}`
         );
@@ -75,6 +78,8 @@ const History = () => {
       } catch (error) {
         console.log(error);
         router.push("/(tabs)");
+      } finally {
+        setIsLoading(false);
       }
     };
     loadHistory();
@@ -82,17 +87,28 @@ const History = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <ScrollView>
-        <View style={styles.mainContainer}>
-          <Navbar />
-          {data && data.soloQuizes.length > 0 && (
-            <SoloQuizesContainer data={data.soloQuizes} />
-          )}
-          {data && data.onlineQuizes.length > 0 && (
-            <OnlineQuizesContainer data={data.onlineQuizes} />
-          )}
+      {isLoading ? (
+        <View style={[styles.loadingModal, { backgroundColor: "white" }]}>
+          <View style={styles.loadingContent}>
+            <ActivityIndicator color={colors.grayLight} size={40} />
+            <Text style={[styles.loadingText, { color: colors.grayLight }]}>
+              Please Wait...
+            </Text>
+          </View>
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView>
+          <View style={styles.mainContainer}>
+            <Navbar />
+            {data && data.soloQuizes.length > 0 && (
+              <SoloQuizesContainer data={data.soloQuizes} />
+            )}
+            {data && data.onlineQuizes.length > 0 && (
+              <OnlineQuizesContainer data={data.onlineQuizes} />
+            )}
+          </View>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -243,10 +259,10 @@ const styles = StyleSheet.create({
     flex: 1,
     width: "100%",
     height: "100%",
+    paddingHorizontal: 10,
   },
   quizContainer: {
     marginVertical: 15,
-    paddingHorizontal: 10,
   },
   quizTypeHeadingContainer: {
     backgroundColor: "#ccc",
@@ -286,5 +302,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 4,
     marginTop: 3,
+  },
+  loadingModal: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,.6)",
+    zIndex: 100,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  loadingContent: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  loadingText: {
+    color: "#fff",
+    fontSize: 18,
+    fontFamily: fontFamily.Regular,
   },
 });

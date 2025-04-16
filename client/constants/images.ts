@@ -27,6 +27,9 @@ import friend1 from "@/assets/images/friend1.png";
 import friend2 from "@/assets/images/friend2.png";
 import friend3 from "@/assets/images/friend3.png";
 import friend4 from "@/assets/images/friend4.png";
+import soloIcon from "@/assets/images/icons/soloIcon.png";
+import onlineIcon from "@/assets/images/icons/onlineIcon.png";
+import friendHistoryIcon from "@/assets/images/icons/friendHistoryIcon.png";
 
 export {
   homeImage,
@@ -58,4 +61,7 @@ export {
   friend2,
   friend3,
   friend4,
+  soloIcon,
+  onlineIcon,
+  friendHistoryIcon,
 };

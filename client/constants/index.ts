@@ -3,7 +3,10 @@ import {
   friend2,
   friend3,
   friend4,
+  friendHistoryIcon,
+  onlineIcon,
   pkFlag,
+  soloIcon,
   ukFlag,
   usaFlag,
 } from "./images";
@@ -40,5 +43,119 @@ export const friends = [
     studyField: "Student in Media and Science",
     ranking: 1500,
     countryFlag: pkFlag,
+  },
+];
+
+export const history = [
+  {
+    id: 1,
+    icon: soloIcon,
+    title: "Solo",
+    matches: 98,
+    performance: 67,
+  },
+  {
+    id: 2,
+    icon: onlineIcon,
+    title: "Online",
+    matches: 211,
+    performance: 73,
+  },
+  {
+    id: 3,
+    icon: friendHistoryIcon,
+    title: "Friends",
+    matches: 284,
+    performance: 58,
+  },
+];
+
+export const historyStatistics = [
+  {
+    id: 1,
+    subject: "Math",
+    performance: 67,
+    status: "Better",
+    statusColor: "#62C875",
+  },
+  {
+    id: 2,
+    subject: "Science",
+    performance: 78,
+    status: "Amazing",
+    statusColor: "#62C875",
+  },
+  {
+    id: 3,
+    subject: "Physics",
+    performance: 33,
+    status: "Not good",
+    statusColor: "#DD5C5E",
+  },
+  {
+    id: 4,
+    subject: "Biology",
+    performance: 92,
+    status: "Marvellous",
+    statusColor: "#62C875",
+  },
+  {
+    id: 5,
+    subject: "English",
+    performance: 21,
+    status: "Bad",
+    statusColor: "#DD5C5E",
+  },
+  {
+    id: 6,
+    subject: "Algebra",
+    performance: 59,
+    status: "Good",
+    statusColor: "#62C875",
+  },
+];
+
+export const historyRow = [
+  {
+    id: 1,
+    subject: "Math",
+    type: "topical",
+    topicName: "Math Basics",
+    date: "07-Apr-2025",
+    performace: 73,
+    isOnline: false,
+  },
+  {
+    id: 2,
+    subject: "Science",
+    type: "yearly",
+    year: 2019,
+    date: "06-Apr-2025",
+    performace: 80,
+    isWin: true,
+    statusColor: "#62C875",
+    isOnline: true,
+  },
+  {
+    id: 3,
+    subject: "Algebra",
+    type: "topical",
+    topicName: "Evaluate Integers ",
+    date: "05-Apr-2025",
+    performace: 64,
+    isWin: false,
+    statusColor: "#FF5828",
+    isOnline: true,
+  },
+  {
+    id: 4,
+    subject: "English",
+    type: "yearly",
+    year: 2022,
+    date: "04-Apr-2025",
+    performace: 72,
+    isWin: true,
+    isOnline: true,
+    statusColor: "#62C875",
   },
 ];

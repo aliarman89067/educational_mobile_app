@@ -59,3 +59,10 @@ export const createUserWebhook = async (req: Request, res: Response) => {
       .json({ message: `Failed to create user ${error.message ?? error}` });
   }
 };
+
+export const getAllUser = async (req: Request, res: Response) => {
+  const { userId } = req.params;
+  try {
+    res.json({ userId });
+  } catch (error) {}
+};
