@@ -13,6 +13,7 @@ import quizRoutes from "./routes/quizRoute";
 import subjectRoute from "./routes/subjectRoute";
 import userRoute from "./routes/userRoute";
 import historyRoute from "./routes/historyRoute";
+import guestRoute from "./routes/guestRoute";
 
 import "./models/Topic";
 import "./models/Year";
@@ -112,7 +113,7 @@ io.on("connection", (socket) => {
       const handleOnlineRoom = async () => {
         // Generate unique room key
         const uniqueKey = [userId, findSameStudent.user].sort().join("_");
-        console.log(uniqueKey);
+        console.log("Unique Id for both users", uniqueKey);
         // Fetch quiz data
         type ModelWithFindById = {
           findById: (id: any) => {
@@ -443,6 +444,7 @@ app.use("/quiz", quizRoutes);
 app.use("/subject", subjectRoute);
 app.use("/user", userRoute);
 app.use("/history", historyRoute);
+app.use("/guest", guestRoute);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "Hello World" });

@@ -60,9 +60,26 @@ export const createUserWebhook = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllUser = async (req: Request, res: Response) => {
-  const { userId } = req.params;
+export const getUsers = async (req: Request, res: Response) => {
+  const { name, userId } = req.params;
   try {
-    res.json({ userId });
-  } catch (error) {}
+    const existingUser = UserModel.findById(userId);
+    if (!existingUser) {
+      res.status(404).json({ message: "Unauthorizes user!" });
+      return;
+    }
+    const users = await UserModel.find({
+      fullName: {
+        $regex: `${name}`,
+        $options: "i",
+      },
+      _id: { $ne: userId },
+    });
+    res.status(200).json(users);
+  } catch (error: any) {
+    console.log(error);
+    res
+      .status(500)
+      .json({ message: `Failed to get users ${error.message ?? error}` });
+  }
 };

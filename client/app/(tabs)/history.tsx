@@ -10,13 +10,14 @@ import {
 import React, { useEffect, useState } from "react";
 import Navbar from "@/components/navbar";
 import { router, usePathname } from "expo-router";
-import { useUser } from "@clerk/clerk-expo";
 import axios from "axios";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import CircleChart from "@/components/CircleChart";
 import OnlineHistoryRow from "@/components/OnlineHistoryRow";
+import { storage } from "@/utils";
+import { User_Type } from "@/utils/type";
 
 type QuizIdAndValueType = {
   _id: string;
@@ -62,17 +63,19 @@ const History = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const pathname = usePathname();
-  const { user, isLoaded } = useUser();
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!user || !user.id) return;
-    setData(null);
     const loadHistory = async () => {
       try {
         setIsLoading(true);
+        const userDataString = storage.getString("current-user");
+        if (!userDataString) {
+          router.replace("/(auth)");
+          return;
+        }
+        const userData = JSON.parse(userDataString) as User_Type;
         const { data: historyData } = await axios.get(
-          `/history/all/${user.id}`
+          `/history/all/${userData.id}`
         );
         setData(historyData);
       } catch (error) {
@@ -83,7 +86,7 @@ const History = () => {
       }
     };
     loadHistory();
-  }, [router, pathname, user, isLoaded]);
+  }, [router, pathname]);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>

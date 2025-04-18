@@ -15,19 +15,18 @@ import BackButton from "@/components/backButton";
 import { SelectDropdown, DropdownData } from "expo-select-dropdown";
 import axios from "axios";
 import { fontFamily } from "@/constants/fonts";
-import { useUser } from "@clerk/clerk-expo";
 import LottieView from "lottie-react-native";
 import FindingTimer from "@/components/findingTimer";
 import { noOpponentFound } from "@/constants/images";
 import { useSocket } from "@/context/SocketContext";
 import { useSocketStore } from "@/context/zustandStore";
+import { storage } from "@/utils";
+import { User_Type } from "@/utils/type";
 
 const MakeQuiz = () => {
   const { socketIo } = useSocket();
   const { sessionId } = useSocketStore();
   const { isOnline } = useLocalSearchParams() as { isOnline: string };
-
-  const { user } = useUser();
 
   const [isInitialLoadingLoading, setIsInitialLoading] = useState(true);
 
@@ -134,9 +133,17 @@ const MakeQuiz = () => {
     imageUrl: string;
   }>(null);
   const [onlineRoomId, setOnlineRoomId] = useState("");
+  const [userData, setUserData] = useState<User_Type | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
+    const userDataString = storage.getString("current-user");
+    if (!userDataString) {
+      router.replace("/(auth)");
+      return;
+    }
+    setUserData(JSON.parse(userDataString));
+
     const loadQuiz = async () => {
       try {
         const { data } = await axios.get(
@@ -227,8 +234,8 @@ const MakeQuiz = () => {
       !selectedSubject ||
       !selectedSubject?.key ||
       (!selectedTopic && !selectedYear) ||
-      !user ||
-      !user.id ||
+      !userData ||
+      !userData.id ||
       !selectedTime ||
       !sessionId ||
       !selectedTime.key
@@ -240,7 +247,7 @@ const MakeQuiz = () => {
       );
       return;
     }
-    if (!user || !user.id) {
+    if (!userData || !userData.id) {
       ToastAndroid.showWithGravity(
         "Your not authenticated!",
         ToastAndroid.SHORT,
@@ -258,10 +265,10 @@ const MakeQuiz = () => {
         yearIdOrTopicId: selectedTopic?.key ?? selectedYear?.key,
         quizLimit: Number(selectedLength.key),
         quizType: selectedCategory.value,
-        isGuest: user?.id ? false : true,
-        userId: user.id,
-        name: user.fullName,
-        imageUrl: user.imageUrl,
+        isGuest: userData.isGuest,
+        userId: userData.id,
+        name: userData.name,
+        imageUrl: userData.imageUrl,
         sessionId,
         seconds: selectedTime.key,
       };

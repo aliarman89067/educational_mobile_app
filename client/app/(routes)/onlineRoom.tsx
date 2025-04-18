@@ -13,7 +13,6 @@ import {
 import React, { useEffect, useState } from "react";
 import { router, useLocalSearchParams, usePathname } from "expo-router";
 import { useSocketStore } from "@/context/zustandStore";
-import { useAuth } from "@clerk/clerk-expo";
 import { useSocket } from "@/context/SocketContext";
 import axios from "axios";
 import { fontFamily } from "@/constants/fonts";
@@ -21,6 +20,8 @@ import { colors } from "@/constants/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import Timer from "@/components/timer";
+import { storage } from "@/utils";
+import { User_Type } from "@/utils/type";
 
 const OnlineRoom = () => {
   const { onlineRoomId } = useLocalSearchParams();
@@ -67,7 +68,6 @@ const OnlineRoom = () => {
     };
   }>(null);
   const { sessionId } = useSocketStore();
-  const { userId, isLoaded } = useAuth();
   const [quizIndex, setQuizIndex] = useState(0);
   const [isBackPressed, setIsBackPressed] = useState(false);
   const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
@@ -84,22 +84,31 @@ const OnlineRoom = () => {
   const [remainingTime, setRemainingTime] = useState("");
   const [newOnlineResultId, setNewOnlineResultId] = useState("");
   const [isLeaving, setIsLeaving] = useState(false);
+  const [userData, setUserData] = useState<User_Type | null>(null);
 
   const { socketIo } = useSocket();
 
   useEffect(() => {
     let timeoutId: any;
-    if (!isLoaded) return;
-    if (!onlineRoomId || !userId) {
+    if (!onlineRoomId) {
       router.back();
       return;
     }
+    const userDataString = storage.getString("current-user");
+    if (!userDataString) {
+      router.replace("/(auth)");
+      return;
+    }
+    const userDataParse = JSON.parse(userDataString) as User_Type;
+
+    setUserData(userDataParse);
 
     // Load data function
     const loadData = async () => {
       try {
+        const isGuestString = JSON.stringify(userDataParse.isGuest);
         const { data } = await axios.get(
-          `/quiz/get-online-room/${onlineRoomId}/${userId}/${sessionId}`
+          `/quiz/get-online-room/${onlineRoomId}/${userDataParse.id}/${isGuestString}/${sessionId}`
         );
         if (data.success) {
           setRemainingTime(data.data.remainingTime);
@@ -161,7 +170,7 @@ const OnlineRoom = () => {
       socketIo.off("complete-response", completeResponseListener);
       clearTimeout(timeoutId);
     };
-  }, [onlineRoomId, userId, isLoaded, router, pathname]);
+  }, [onlineRoomId, router, pathname]);
 
   useEffect(() => {
     if (!data) return;
@@ -226,7 +235,7 @@ const OnlineRoom = () => {
 
     return {
       roomId: onlineRoomId,
-      userId,
+      userId: userData?.id,
       selectedStates: sortedQuizId,
       mcqs,
       completeTime,
@@ -285,7 +294,7 @@ const OnlineRoom = () => {
       // Emit submission data to the server
       socketIo.emit("online-resign-submit", {
         roomId: onlineRoomId,
-        userId,
+        userId: userData?.id,
         selectedStates: sortedQuizId,
         mcqs,
         completeTime,
@@ -383,7 +392,7 @@ const OnlineRoom = () => {
       // Emit submission data to the server
       socketIo.emit("online-submit", {
         roomId: onlineRoomId,
-        userId,
+        userId: userData?.id,
         selectedStates: sortedQuizId,
         mcqs,
         completeTime,
@@ -437,7 +446,7 @@ const OnlineRoom = () => {
         socketIo.emit("opponent-quiz-index", {
           index: quizIndex + 1,
           roomId: onlineRoomId,
-          userId,
+          userId: userData?.id,
         });
       }
     }

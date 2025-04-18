@@ -1,34 +1,46 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import Entypo from "@expo/vector-icons/Entypo";
 import * as Linking from "expo-linking";
 import { useClerk, useUser } from "@clerk/clerk-expo";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
-import { bell, logoImage, starFill } from "@/constants/images";
+import { bell, logoImage } from "@/constants/images";
+import { storage } from "@/utils";
+import { User_Type } from "@/utils/type";
 import { router } from "expo-router";
 
 const Navbar = () => {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const [data, setData] = useState<User_Type | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      Linking.openURL(Linking.createURL("/"));
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
+  useEffect(() => {
+    const userData = storage.getString("current-user");
+    if (userData) {
+      setData(JSON.parse(userData!!));
+    } else {
+      router.replace("/(auth)");
     }
+    setIsLoading(false);
+  }, []);
+
+  const handleLogout = () => {
+    storage.delete("current-user");
+    router.replace("/(auth)");
   };
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={handleSignOut} activeOpacity={0.7}>
-        <Image
-          source={{ uri: user?.imageUrl }}
-          alt={`${user?.fullName} profile image`}
-          style={styles.profileImg}
-        />
-      </TouchableOpacity>
+      <View>
+        <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
+          <Image
+            source={{ uri: data?.imageUrl }}
+            alt={`${data?.name} profile image`}
+            style={styles.profileImg}
+          />
+        </TouchableOpacity>
+        <Text style={styles.nameText}>{data?.name}</Text>
+      </View>
       <Image source={logoImage} style={styles.logoImg} />
       <TouchableOpacity activeOpacity={0.7} style={styles.bellBox}>
         <Image
@@ -54,10 +66,15 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   profileImg: {
-    width: 40,
-    height: 40,
-    borderRadius: 8,
+    width: 35,
+    height: 35,
+    borderRadius: 12,
     resizeMode: "cover",
+  },
+  nameText: {
+    fontFamily: fontFamily.Medium,
+    fontSize: 13,
+    color: colors.grayLight,
   },
   logoImg: {
     width: 140,

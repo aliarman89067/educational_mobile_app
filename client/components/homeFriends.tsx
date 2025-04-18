@@ -11,8 +11,8 @@ const HomeFriends = () => {
       <Text style={styles.heading}>Friends</Text>
       <View style={styles.contentContainer}>
         {friends.map((friend, index) => (
-          <>
-            <View key={index} style={styles.friendBox}>
+          <View key={index}>
+            <View style={styles.friendBox}>
               <View style={styles.friendProfileBox}>
                 <Image
                   source={friend.image}
@@ -57,7 +57,7 @@ const HomeFriends = () => {
             {index !== friends.length - 1 && (
               <View style={styles.separatorLine}></View>
             )}
-          </>
+          </View>
         ))}
       </View>
       <TouchableOpacity activeOpacity={0.7} style={styles.allFriendButton}>

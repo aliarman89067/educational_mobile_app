@@ -1,6 +1,5 @@
 import {
   ActivityIndicator,
-  Dimensions,
   SafeAreaView,
   StyleSheet,
   Text,
@@ -16,7 +15,8 @@ import { fontFamily } from "@/constants/fonts";
 import Timer from "@/components/timer";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
-import { useUser } from "@clerk/clerk-expo";
+import { storage } from "@/utils";
+import { User_Type } from "@/utils/type";
 
 const SoloRoom = () => {
   const { roomId } = useLocalSearchParams();
@@ -29,7 +29,7 @@ const SoloRoom = () => {
   const [isLeaveLoading, setIsLeaveLoading] = useState(false);
   const [isTimeout, setIsTimeout] = useState(false);
   const [isNextClicked, setIsNextClicked] = useState(false);
-  const { user } = useUser();
+  const [userData, setUserData] = useState<User_Type | null>(null);
 
   const [time, setTime] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const pathname = usePathname();
@@ -70,6 +70,13 @@ const SoloRoom = () => {
         setData(null);
         setIsError(false);
         setIsLoading(true);
+        const userDataString = storage.getString("current-user");
+        if (userDataString) {
+          setUserData(JSON.parse(userDataString));
+        } else {
+          router.replace("/(auth)");
+          return;
+        }
         const { data: quizData } = await axios.get(
           `/quiz/get/solo-room/${roomId}`
         );
@@ -84,7 +91,6 @@ const SoloRoom = () => {
       }
     };
     loadRoomData();
-    console.log("Its running");
   }, [roomId, router, pathname]);
 
   const handleOptionChange = ({
@@ -210,7 +216,8 @@ const SoloRoom = () => {
           type: "solo-room",
           mcqs,
           states: sortedQuizId ?? [],
-          userId: user ? user.id : "",
+          isGuest: userData?.isGuest,
+          userId: userData?.id,
           time: completeTime,
         }
       );

@@ -9,7 +9,6 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { router, useLocalSearchParams } from "expo-router";
-import { useAuth } from "@clerk/clerk-expo";
 import { useSocket } from "@/context/SocketContext";
 import axios from "axios";
 import { colors } from "@/constants/colors";
@@ -21,6 +20,8 @@ import BackButton from "@/components/backButton";
 import clockAnimation from "../../assets/animations/clock.json";
 import successAnimation from "../../assets/animations/success.json";
 import AntDesign from "@expo/vector-icons/AntDesign";
+import { User_Type } from "@/utils/type";
+import { storage } from "@/utils";
 
 type DataTypes = {
   _id: string;
@@ -61,7 +62,6 @@ type DataTypes = {
 const OnlineResult = () => {
   const { onlineResultId: resultId, onlineRoomId: roomId } =
     useLocalSearchParams();
-  const { userId, isLoaded } = useAuth();
   const [isPending, setIsPending] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [opponentUser, setOpponentUser] = useState<null | {
@@ -124,6 +124,7 @@ const OnlineResult = () => {
     "loading" | "finded" | "cancelled"
   >("loading");
   const [isGetRematchRequest, setIsGetRematchRequest] = useState(false);
+  const [userData, setUserData] = useState<User_Type | null>(null);
   const { socketIo } = useSocket();
 
   useEffect(() => {
@@ -131,15 +132,18 @@ const OnlineResult = () => {
       router.back();
       return;
     }
-    if (isLoaded && !userId) {
-      router.back();
+    const userDataString = storage.getString("current-user");
+    if (!userDataString) {
+      router.replace("/(auth)");
       return;
     }
-
+    const userDataParse = JSON.parse(userDataString) as User_Type;
+    const isGuest = JSON.stringify(userDataParse.isGuest);
+    setUserData(userDataParse);
     const loadData = async () => {
       try {
         const { data } = await axios.get(
-          `/quiz/get-online-history/${resultId}/${roomId}`
+          `/quiz/get-online-history/${resultId}/${roomId}/${isGuest}`
         );
         if (data.success) {
           if (data.isPending) {
@@ -200,7 +204,7 @@ const OnlineResult = () => {
       socketIo.off("get-online-history-data", handleHistoryData);
       socketIo.off("get-online-history-error", handleHistoryError);
     };
-  }, [resultId, roomId, router, isLoaded]);
+  }, [resultId, roomId, router]);
 
   useEffect(() => {
     if (!myData && !opponentData) return;
@@ -230,7 +234,7 @@ const OnlineResult = () => {
 
   const checkResign = () => {
     if (resignation) {
-      if (resignation === userId) {
+      if (resignation === userData?.id) {
         return "true";
       } else {
         return "false";

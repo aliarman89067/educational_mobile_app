@@ -1,11 +1,19 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useCallback } from "react";
-import { authBgImage, googleImage, logoImage } from "@/constants/images";
+import {
+  authBgImage,
+  googleImage,
+  logoImage,
+  userGuest,
+} from "@/constants/images";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
 import { useSSO } from "@clerk/clerk-expo";
+import axios from "axios";
+import { storage } from "@/utils";
+import { router } from "expo-router";
 
 export const useWarmUpBrowser = () => {
   useEffect(() => {
@@ -39,6 +47,20 @@ const AuthPage = () => {
     }
   }, []);
 
+  const onGuestPress = async () => {
+    const { data } = await axios.post("/guest/");
+    const storageData = {
+      id: data._id,
+      isGuest: true,
+      count: data.count,
+      createdAt: data.createdAt,
+      imageUrl: data.imageUrl,
+      name: data.name,
+    };
+    storage.set("current-user", JSON.stringify(storageData));
+    router.replace("/(tabs)");
+  };
+
   return (
     <View style={styles.mainContainer}>
       <View style={styles.logoContainer}>
@@ -58,6 +80,19 @@ const AuthPage = () => {
         />
       </View>
       <View style={styles.authContainer}>
+        <TouchableOpacity
+          onPress={onGuestPress}
+          activeOpacity={0.7}
+          style={styles.googleButton}
+        >
+          <Text style={styles.googleText}>Start as Guest</Text>
+          <Image
+            source={userGuest}
+            style={styles.googleImage}
+            alt="Google Icon Image"
+            resizeMode="contain"
+          />
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={onPress}
           activeOpacity={0.7}
@@ -108,7 +143,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    height: 130,
+    height: 180,
+    gap: 10,
     borderTopEndRadius: 30,
     borderTopStartRadius: 30,
   },

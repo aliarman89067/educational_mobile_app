@@ -10,8 +10,13 @@ const HomeHistoryRow = () => {
   return (
     <View style={styles.container}>
       {historyRow.map((data, index) => (
-        <Shadow distance={6} offset={[1, 1]} style={{ width: "100%" }}>
-          <View key={index} style={styles.row}>
+        <Shadow
+          key={index}
+          distance={6}
+          offset={[1, 1]}
+          style={{ width: "100%" }}
+        >
+          <View style={styles.row}>
             <View style={styles.content}>
               <View style={{ marginBottom: 3 }}>
                 {data.isOnline && (

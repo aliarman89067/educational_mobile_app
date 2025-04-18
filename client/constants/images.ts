@@ -30,6 +30,7 @@ import friend4 from "@/assets/images/friend4.png";
 import soloIcon from "@/assets/images/icons/soloIcon.png";
 import onlineIcon from "@/assets/images/icons/onlineIcon.png";
 import friendHistoryIcon from "@/assets/images/icons/friendHistoryIcon.png";
+import userGuest from "@/assets/images/icons/user-guest.png";
 
 export {
   homeImage,
@@ -64,4 +65,5 @@ export {
   soloIcon,
   onlineIcon,
   friendHistoryIcon,
+  userGuest,
 };

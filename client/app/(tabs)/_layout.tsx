@@ -1,13 +1,14 @@
-import { ActivityIndicator, Image, StyleSheet, Text, View } from "react-native";
-import { Redirect, Tabs } from "expo-router";
+import { Image, StyleSheet, Text, View } from "react-native";
+import { router, Tabs } from "expo-router";
 import {
   friendsImage,
   historyImage,
   homeImage,
   profileImage,
 } from "@/constants/images";
-import { useAuth } from "@clerk/clerk-expo";
 import { colors } from "@/constants/colors";
+import { useEffect, useState } from "react";
+import { storage } from "@/utils";
 
 interface TabBarIconProps {
   focused: boolean;
@@ -37,18 +38,17 @@ const TabBarIcon = ({ focused, icon, label }: TabBarIconProps) => {
 };
 
 const TabsLayout = () => {
-  const { isSignedIn, isLoaded } = useAuth();
-  if (!isLoaded) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
+  const [isSignedIn, setIsSignedIn] = useState(false);
 
-  if (!isSignedIn) {
-    return <Redirect href={"/(auth)"} />;
-  }
+  useEffect(() => {
+    const currentUser = storage.getString("current-user");
+    console.log(currentUser);
+    if (!currentUser) {
+      setTimeout(() => {
+        router.replace("/(auth)");
+      }, 0);
+    }
+  }, []);
   return (
     <Tabs
       screenOptions={{

@@ -7,6 +7,7 @@ import HistoryModel from "../models/History";
 import OnlineRoomModel from "../models/OnlineRoom";
 import UserModel from "../models/User";
 import OnlineHistoryModel from "../models/OnlineHistory";
+import GuestModel from "../models/Guest";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -171,7 +172,7 @@ export const leaveSoloRoom = async (req: Request, res: Response) => {
 };
 export const submitSoloRoom = async (req: Request, res: Response) => {
   try {
-    const { roomId, type, mcqs, states, userId, time } = req.body;
+    const { roomId, type, mcqs, states, userId, time, isGuest } = req.body;
 
     if (!roomId || !type || !mcqs || !states || !time) {
       res
@@ -245,9 +246,10 @@ export const soloRoomResult = async (req: Request, res: Response) => {
 };
 
 export const getOnlineRoom = async (req: Request, res: Response) => {
-  const { onlineRoomId, userId, sessionId } = req.params as {
+  const { onlineRoomId, userId, isGuest, sessionId } = req.params as {
     onlineRoomId: string;
     userId: string;
+    isGuest: string;
     sessionId: string;
   };
   try {
@@ -334,9 +336,15 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
         { new: true }
       );
       remainingTime = updatedOnlineRoom?.user1RemainingTime;
-      opponent = await UserModel.findOne({
-        clerkId: onlineRoomData.user2,
-      });
+      if (isGuest === "true") {
+        opponent = await GuestModel.findOne({
+          _id: onlineRoomData.user2,
+        });
+      } else {
+        opponent = await UserModel.findOne({
+          clerkId: onlineRoomData.user2,
+        });
+      }
     } else if (onlineRoomData.user2 === userId) {
       const updatedOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
         {
@@ -349,9 +357,15 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
         { new: true }
       );
       remainingTime = updatedOnlineRoom?.user2RemainingTime;
-      opponent = await UserModel.findOne({
-        clerkId: onlineRoomData.user1,
-      });
+      if (isGuest === "true") {
+        opponent = await GuestModel.findOne({
+          _id: onlineRoomData.user1,
+        });
+      } else {
+        opponent = await UserModel.findOne({
+          clerkId: onlineRoomData.user1,
+        });
+      }
     }
     if (!opponent) {
       res.status(200).json({
@@ -374,7 +388,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
 };
 
 export const getOnlineResult = async (req: Request, res: Response) => {
-  const { resultId, roomId } = req.params;
+  const { resultId, roomId, isGuest } = req.params;
   try {
     if (!resultId || !roomId) {
       res.status(404).json({
@@ -449,13 +463,25 @@ export const getOnlineResult = async (req: Request, res: Response) => {
 
     let opponentUser;
     if (findOnlineRoom.user1 === myHistory?.user) {
-      opponentUser = await UserModel.findOne({
-        clerkId: findOnlineRoom.user2,
-      }).select("fullName imageUrl clerkId");
+      if (isGuest === "true") {
+        opponentUser = await GuestModel.findOne({
+          _id: findOnlineRoom.user2,
+        });
+      } else {
+        opponentUser = await UserModel.findOne({
+          clerkId: findOnlineRoom.user2,
+        }).select("fullName imageUrl clerkId");
+      }
     } else {
-      opponentUser = await UserModel.findOne({
-        clerkId: findOnlineRoom.user1,
-      }).select("fullName imageUrl clerkId");
+      if (isGuest === "true") {
+        opponentUser = await GuestModel.findOne({
+          clerkId: findOnlineRoom.user1,
+        });
+      } else {
+        opponentUser = await UserModel.findOne({
+          clerkId: findOnlineRoom.user1,
+        }).select("fullName imageUrl clerkId");
+      }
     }
 
     if (findOpponentHistory) {

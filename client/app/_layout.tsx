@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { SplashScreen, Stack } from "expo-router";
+import { Slot, SplashScreen, Stack } from "expo-router";
 import { ClerkProvider } from "@clerk/clerk-expo";
 import { tokenCache } from "@clerk/clerk-expo/token-cache";
 import { useFonts } from "expo-font";
@@ -22,17 +22,18 @@ const Layout = () => {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
+
   if (!loaded || error) return;
 
   axios.defaults.baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
+
   return (
-    <ClerkProvider tokenCache={tokenCache}>
+    <ClerkProvider
+      tokenCache={tokenCache}
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+    >
       <SocketProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="(auth)" />
-          <Stack.Screen name="(routes)" />
-        </Stack>
+        <Slot />
       </SocketProvider>
     </ClerkProvider>
   );
