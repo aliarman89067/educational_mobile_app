@@ -6,7 +6,7 @@ export const createGuest = async (req: Request, res: Response) => {
     const guestCount = await GuestModel.countDocuments();
     const guest = await GuestModel.create({
       count: guestCount,
-      name: `Guest_${guestCount}`,
+      fullName: `Guest_${guestCount}`,
     });
     res.json(guest);
   } catch (error: any) {

@@ -22,104 +22,111 @@ import { useSocket } from "@/context/SocketContext";
 import { useSocketStore } from "@/context/zustandStore";
 import { storage } from "@/utils";
 import { User_Type } from "@/utils/type";
+import SelectInput from "@/components/SelectInput";
 
 const MakeQuiz = () => {
+  const pathname = usePathname();
   const { socketIo } = useSocket();
   const { sessionId } = useSocketStore();
   const { isOnline } = useLocalSearchParams() as { isOnline: string };
 
   const [isInitialLoadingLoading, setIsInitialLoading] = useState(true);
 
-  const [selectedCategory, setSelectedCategory] = useState<
-    DropdownData<string, string>
-  >({
-    key: "1",
+  const [selectedCategory, setSelectedCategory] = useState<{
+    id: string;
+    value: string;
+  } | null>({
+    id: "1",
     value: "Topical",
   });
-  const [dataCategory] = useState<DropdownData<string, string>[]>([
-    { key: "1", value: "Topical" },
-    { key: "2", value: "Yearly" },
+  const [dataCategory] = useState<{ id: string; value: string }[]>([
+    { id: "1", value: "Topical" },
+    { id: "2", value: "Yearly" },
   ]);
-  const [selectedSubject, setSelectedSubject] = useState<DropdownData<
-    string,
-    string
-  > | null>(null);
+  const [selectedSubject, setSelectedSubject] = useState<{
+    id: string;
+    value: string;
+  } | null>(null);
   const [dataSubjects, setDataSubjects] = useState<
-    DropdownData<string, string>[] | null
+    { id: string; value: string }[] | null
   >(null);
-  const [selectedTopic, setSelectedTopic] = useState<DropdownData<
-    string,
-    string
-  > | null>(null);
+  const [selectedTopic, setSelectedTopic] = useState<{
+    id: string;
+    value: string;
+  } | null>(null);
   const [dataTopics, setDataTopics] = useState<
-    DropdownData<string, string>[] | null
+    { id: string; value: string }[] | null
   >(null);
 
-  const [selectedYear, setSelectedYear] = useState<DropdownData<
-    string,
-    string
-  > | null>(null);
+  const [selectedYear, setSelectedYear] = useState<{
+    id: string;
+    value: string;
+  } | null>(null);
   const [dataYears, setDataYears] = useState<
-    DropdownData<string, string>[] | null
+    { id: string; value: string }[] | null
   >(null);
-  const [dataTime] = useState<DropdownData<string, string>[]>([
+  const [dataTime] = useState<{ id: string; value: string }[] | null>([
     {
-      key: "no-limit",
+      id: "no-limit",
       value: "No Limit",
     },
     {
-      key: "30",
+      id: "30",
       value: "30 Seconds",
     },
     {
-      key: "40",
+      id: "40",
       value: "40 Seconds",
     },
     {
-      key: "50",
+      id: "50",
       value: "50 Seconds",
     },
     {
-      key: "60",
+      id: "60",
       value: "60 Seconds",
     },
     {
-      key: "120",
+      id: "120",
       value: "120 Seconds",
     },
     {
-      key: "180",
+      id: "180",
       value: "180 Seconds",
     },
     {
-      key: "240",
+      id: "240",
       value: "240 Seconds",
     },
     {
-      key: "300",
+      id: "300",
       value: "300 Seconds",
     },
   ]);
-  const [selectedTime, setSelectedTime] = useState<
-    DropdownData<string, string>
-  >({
-    key: "30",
+  const [selectedTime, setSelectedTime] = useState<{
+    id: string;
+    value: string;
+  } | null>({
+    id: "30",
     value: "10 seconds",
   });
-  const [dataLength] = useState<DropdownData<string, string>[]>([
-    { key: "10", value: "10 Quiz" },
-    { key: "20", value: "20 Quiz" },
-    { key: "30", value: "30 Quiz" },
-    { key: "40", value: "40 Quiz" },
-    { key: "50", value: "50 Quiz" },
+  const [dataLength] = useState<{ id: string; value: string }[] | null>([
+    { id: "10", value: "10 Quiz" },
+    { id: "20", value: "20 Quiz" },
+    { id: "30", value: "30 Quiz" },
+    { id: "40", value: "40 Quiz" },
+    { id: "50", value: "50 Quiz" },
   ]);
-  const [selectedLength, setSelectedLength] = useState<
-    DropdownData<string, string>
-  >({
-    key: "10",
+  const [selectedLength, setSelectedLength] = useState<{
+    id: string;
+    value: string;
+  } | null>({
+    id: "10",
     value: "10 Quiz",
   });
-  const [subjectId, setSubjectId] = useState<string | null>(null);
+  const [currentSelect, setCurrentSelect] = useState<
+    "subject" | "category" | "topic" | "year" | "time" | "length" | null
+  >(null);
 
   const [isLoading, setIsLoading] = useState(false);
   // Online States
@@ -134,53 +141,48 @@ const MakeQuiz = () => {
   }>(null);
   const [onlineRoomId, setOnlineRoomId] = useState("");
   const [userData, setUserData] = useState<User_Type | null>(null);
-  const pathname = usePathname();
 
   useEffect(() => {
     const userDataString = storage.getString("current-user");
     if (!userDataString) {
-      router.replace("/(auth)");
+      router.push("/(auth)");
       return;
     }
     setUserData(JSON.parse(userDataString));
-
     const loadQuiz = async () => {
       try {
         const { data } = await axios.get(
-          `/quiz/get-all/${selectedCategory.value}`
+          `/quiz/get-all/${selectedCategory?.value}`
         );
         const formattedSubjectData = data.subjects.map((subject: any) => ({
-          key: subject._id,
+          id: subject._id,
           value: subject.subject,
         }));
         setSelectedSubject({
-          key: formattedSubjectData[0].key,
+          id: formattedSubjectData[0].id,
           value: formattedSubjectData[0].value,
         });
         setDataSubjects(formattedSubjectData);
-        if (selectedCategory.value === "Topical") {
-          const topicsData: any = data.data[0].topics.map((topic: any) => ({
-            key: topic._id,
+        if (selectedCategory?.value === "Topical") {
+          const topicsData = data.data[0].topics.map((topic: any) => ({
+            id: topic._id,
             value: topic.topic,
-            subjectId: "",
           }));
-          setSubjectId(data.data[0]._id);
           setDataTopics(topicsData);
           setSelectedTopic({
-            key: topicsData[0].key,
+            id: topicsData[0].id,
             value: topicsData[0].value,
           });
           setSelectedYear(null);
           setDataYears(null);
         } else {
-          const yearData: any = data.data[0].years.map((year: any) => ({
-            key: year._id,
+          const yearData = data.data[0].years.map((year: any) => ({
+            id: year._id,
             value: year.year,
           }));
-          setSubjectId(data.data[0]._id);
           setDataYears(yearData);
           setSelectedYear({
-            key: yearData[0].key,
+            id: yearData[0].id,
             value: yearData[0].value,
           });
           setSelectedTopic(null);
@@ -193,15 +195,15 @@ const MakeQuiz = () => {
       }
     };
     loadQuiz();
-  }, [selectedCategory, pathname, router]);
+  }, [selectedCategory]);
+
   const handleSoloPlay = async () => {
     if (
       !selectedSubject ||
       (!selectedTopic && !selectedYear) ||
       !selectedLength ||
       (!dataYears && !dataTopics) ||
-      !selectedTime ||
-      !subjectId
+      !selectedTime
     ) {
       ToastAndroid.showWithGravity(
         "Please Select all Fields",
@@ -213,11 +215,11 @@ const MakeQuiz = () => {
     try {
       setIsLoading(true);
       const { data } = await axios.post("/quiz/solo-player", {
-        subjectId: subjectId,
-        yearIdOrTopicId: selectedTopic?.key || selectedYear?.key,
-        quizLimit: Number(selectedLength.key),
+        subjectId: selectedSubject.id,
+        yearIdOrTopicId: selectedTopic?.id || selectedYear?.id,
+        quizLimit: Number(selectedLength.id),
         quizType: dataYears ? "Yearly" : "Topical",
-        seconds: selectedTime.key,
+        seconds: selectedTime.id,
       });
       router.push({
         pathname: "/(routes)/soloRoom",
@@ -232,13 +234,13 @@ const MakeQuiz = () => {
   const handleOnlinePlay = () => {
     if (
       !selectedSubject ||
-      !selectedSubject?.key ||
+      !selectedSubject?.id ||
       (!selectedTopic && !selectedYear) ||
       !userData ||
       !userData.id ||
       !selectedTime ||
       !sessionId ||
-      !selectedTime.key
+      !selectedTime.id
     ) {
       ToastAndroid.showWithGravity(
         "Please Select all Fields!",
@@ -261,16 +263,16 @@ const MakeQuiz = () => {
       setErrorFinding(false);
       setIsOpponentFinding(true);
       const onlineData = {
-        subjectId: selectedSubject.key,
-        yearIdOrTopicId: selectedTopic?.key ?? selectedYear?.key,
-        quizLimit: Number(selectedLength.key),
-        quizType: selectedCategory.value,
+        subjectId: selectedSubject.id,
+        yearIdOrTopicId: selectedTopic?.id ?? selectedYear?.id,
+        quizLimit: Number(selectedLength?.id),
+        quizType: selectedCategory?.value,
         isGuest: userData.isGuest,
         userId: userData.id,
-        name: userData.name,
+        name: userData.fullName,
         imageUrl: userData.imageUrl,
         sessionId,
-        seconds: selectedTime.key,
+        seconds: selectedTime.id,
       };
 
       socketIo.emit("create-online-room", onlineData);
@@ -316,7 +318,9 @@ const MakeQuiz = () => {
     setNotFound(false);
     router.push({ pathname: "/(routes)/onlineRoom", params: { onlineRoomId } });
   };
-
+  const handleChangeCategory = async (category: string) => {
+    const { data } = await axios.get(`/quiz/get-all/${category}`);
+  };
   return (
     <SafeAreaView style={{ flex: 1 }}>
       <View style={styles.container}>
@@ -579,106 +583,58 @@ const MakeQuiz = () => {
             <View style={styles.contentContainer}>
               <BackButton />
               <View style={styles.optionsContainer}>
-                <View style={styles.categoryContainer}>
-                  <SelectDropdown
-                    data={dataSubjects!!}
-                    placeholder={"Select Subject"}
-                    selected={selectedSubject}
-                    setSelected={setSelectedSubject}
-                    searchOptions={{ cursorColor: "transparent" }}
-                    searchBoxStyles={{ borderColor: "transparent" }}
-                    dropdownStyles={{
-                      borderColor: "transparent",
-                      backgroundColor: "#fff",
-                      zIndex: 10,
-                    }}
-                  />
-                </View>
-                <View style={styles.categoryContainer}>
-                  <SelectDropdown
-                    data={dataCategory}
-                    placeholder={"Select Category"}
-                    selected={selectedCategory}
-                    setSelected={setSelectedCategory}
-                    searchOptions={{ cursorColor: "transparent" }}
-                    searchBoxStyles={{ borderColor: "transparent" }}
-                    dropdownStyles={{
-                      borderColor: "transparent",
-                      backgroundColor: "#fff",
-                      zIndex: 8,
-                    }}
-                  />
-                </View>
+                <SelectInput
+                  selectedState={selectedSubject}
+                  setSelectedState={setSelectedSubject}
+                  data={dataSubjects}
+                  currentSelect={currentSelect}
+                  setCurrentSelect={setCurrentSelect}
+                  category="subject"
+                />
+                <SelectInput
+                  selectedState={selectedCategory}
+                  setSelectedState={setSelectedCategory}
+                  data={dataCategory}
+                  currentSelect={currentSelect}
+                  setCurrentSelect={setCurrentSelect}
+                  category="category"
+                />
                 {dataTopics && dataTopics.length > 0 && (
-                  <View style={styles.categoryContainer}>
-                    <SelectDropdown
-                      data={dataTopics}
-                      placeholder={"Select Topic"}
-                      selected={selectedTopic}
-                      setSelected={({ key, value }) => {
-                        setSelectedTopic({ key, value });
-                        setSelectedYear(null);
-                      }}
-                      searchOptions={{ cursorColor: "transparent" }}
-                      searchBoxStyles={{ borderColor: "transparent" }}
-                      dropdownStyles={{
-                        borderColor: "transparent",
-                        backgroundColor: "#fff",
-                        zIndex: 8,
-                      }}
-                    />
-                  </View>
+                  <SelectInput
+                    selectedState={selectedTopic}
+                    setSelectedState={setSelectedTopic}
+                    data={dataTopics}
+                    currentSelect={currentSelect}
+                    setCurrentSelect={setCurrentSelect}
+                    category="topic"
+                  />
                 )}
                 {dataYears && dataYears.length > 0 && (
-                  <View style={styles.categoryContainer}>
-                    <SelectDropdown
-                      data={dataYears}
-                      placeholder={"Select Year"}
-                      selected={selectedYear}
-                      setSelected={({ key, value }) => {
-                        setSelectedYear({ key, value });
-                        setSelectedTopic(null);
-                      }}
-                      searchOptions={{ cursorColor: "transparent" }}
-                      searchBoxStyles={{ borderColor: "transparent" }}
-                      dropdownStyles={{
-                        borderColor: "transparent",
-                        backgroundColor: "#fff",
-                        zIndex: 8,
-                      }}
-                    />
-                  </View>
+                  <SelectInput
+                    selectedState={selectedYear}
+                    setSelectedState={setSelectedYear}
+                    data={dataYears}
+                    currentSelect={currentSelect}
+                    setCurrentSelect={setCurrentSelect}
+                    category="year"
+                  />
                 )}
-                <View style={styles.categoryContainer}>
-                  <SelectDropdown
-                    data={dataTime!!}
-                    placeholder={"Select Time"}
-                    selected={selectedTime}
-                    setSelected={setSelectedTime}
-                    searchOptions={{ cursorColor: "transparent" }}
-                    searchBoxStyles={{ borderColor: "transparent" }}
-                    dropdownStyles={{
-                      borderColor: "transparent",
-                      backgroundColor: "#fff",
-                      zIndex: 8,
-                    }}
-                  />
-                </View>
-                <View style={styles.categoryContainer}>
-                  <SelectDropdown
-                    data={dataLength}
-                    placeholder={"Select Limit"}
-                    selected={selectedLength}
-                    setSelected={setSelectedLength}
-                    searchOptions={{ cursorColor: "transparent" }}
-                    searchBoxStyles={{ borderColor: "transparent" }}
-                    dropdownStyles={{
-                      borderColor: "transparent",
-                      backgroundColor: "#fff",
-                      zIndex: 8,
-                    }}
-                  />
-                </View>
+                <SelectInput
+                  selectedState={selectedTime}
+                  setSelectedState={setSelectedTime}
+                  data={dataTime}
+                  currentSelect={currentSelect}
+                  setCurrentSelect={setCurrentSelect}
+                  category="time"
+                />
+                <SelectInput
+                  selectedState={selectedLength}
+                  setSelectedState={setSelectedLength}
+                  data={dataLength}
+                  currentSelect={currentSelect}
+                  setCurrentSelect={setCurrentSelect}
+                  category="length"
+                />
               </View>
               <TouchableOpacity
                 onPress={

@@ -29,6 +29,7 @@ import topicModel from "./models/Topic";
 import OnlineRoomModel from "./models/OnlineRoom";
 import UserModel from "./models/User";
 import OnlineHistoryModel from "./models/OnlineHistory";
+import GuestModel from "./models/Guest";
 
 dotEnv.config();
 
@@ -54,6 +55,7 @@ io.on("connection", (socket) => {
       name,
       imageUrl,
       seconds,
+      isGuest,
     } = data;
 
     if (
@@ -182,10 +184,16 @@ io.on("connection", (socket) => {
         const isUser1 = user1Id === userId;
         const opponentId = isUser1 ? user2Id : user1Id;
 
-        const opponentUser = await UserModel.findOne(
-          { clerkId: opponentId },
-          "fullName imageUrl"
-        );
+        let opponentUser: any;
+
+        if (isGuest) {
+          opponentUser = await GuestModel.findOne({ _id: opponentId });
+        } else {
+          opponentUser = await UserModel.findOne(
+            { clerkId: opponentId },
+            "fullName imageUrl"
+          );
+        }
 
         // Verify room readiness
         let roomValid = false;

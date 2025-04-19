@@ -4,7 +4,6 @@ import { router, usePathname } from "expo-router";
 import { fontFamily } from "@/constants/fonts";
 import { colors } from "@/constants/colors";
 import CircleChart from "./CircleChart";
-import { useUser } from "@clerk/clerk-expo";
 
 type QuizIdAndValueType = {
   _id: string;
@@ -35,7 +34,6 @@ const OnlineHistoryRow = ({ data }: Data) => {
   const pathname = usePathname();
   const [isWinner, setIsWinner] = useState(false);
   const [isDuo, setIsDuo] = useState(false);
-  const { user } = useUser();
 
   const getDate = (date: string) => {
     const newDate = new Date(date);
@@ -87,17 +85,17 @@ const OnlineHistoryRow = ({ data }: Data) => {
     }
   }, [data, pathname, router]);
 
-  const checkResign = () => {
-    if (data.resignation && user) {
-      if (data.resignation === user.id) {
-        return "true";
-      } else {
-        return "false";
-      }
-    } else {
-      return "no-resign";
-    }
-  };
+  // const checkResign = () => {
+  //   if (data.resignation && user) {
+  //     if (data.resignation === user.id) {
+  //       return "true";
+  //     } else {
+  //       return "false";
+  //     }
+  //   } else {
+  //     return "no-resign";
+  //   }
+  // };
   return (
     <TouchableOpacity
       key={data.roomId}
@@ -111,7 +109,7 @@ const OnlineHistoryRow = ({ data }: Data) => {
       style={styles.quizRowBox}
     >
       <View>
-        {checkResign() === "no-resign" && (
+        {/* {checkResign() === "no-resign" && (
           <View>
             <Text
               style={{
@@ -159,7 +157,7 @@ const OnlineHistoryRow = ({ data }: Data) => {
               You Loose By Resignation
             </Text>
           </View>
-        )}
+        )} */}
         <Text style={styles.subtitleText}>{data.subjectName}</Text>
         {data.quizType === "Topical" ? (
           <View style={styles.typeContainer}>

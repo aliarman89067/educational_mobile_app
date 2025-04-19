@@ -1,7 +1,5 @@
 import React, { useEffect } from "react";
-import { Slot, SplashScreen, Stack } from "expo-router";
-import { ClerkProvider } from "@clerk/clerk-expo";
-import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import { Slot, SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import axios from "axios";
 import { SocketProvider } from "@/context/SocketContext";
@@ -28,14 +26,9 @@ const Layout = () => {
   axios.defaults.baseURL = process.env.EXPO_PUBLIC_API_BASE_URL;
 
   return (
-    <ClerkProvider
-      tokenCache={tokenCache}
-      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
-    >
-      <SocketProvider>
-        <Slot />
-      </SocketProvider>
-    </ClerkProvider>
+    <SocketProvider>
+      <Slot />
+    </SocketProvider>
   );
 };
 

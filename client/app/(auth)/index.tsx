@@ -10,7 +10,6 @@ import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import * as WebBrowser from "expo-web-browser";
 import * as AuthSession from "expo-auth-session";
-import { useSSO } from "@clerk/clerk-expo";
 import axios from "axios";
 import { storage } from "@/utils";
 import { router } from "expo-router";
@@ -24,38 +23,17 @@ export const useWarmUpBrowser = () => {
   }, []);
 };
 
-WebBrowser.maybeCompleteAuthSession();
-
 const AuthPage = () => {
-  useWarmUpBrowser();
-
-  const { startSSOFlow } = useSSO();
-
-  const onPress = useCallback(async () => {
-    try {
-      const { createdSessionId, setActive, signIn, signUp } =
-        await startSSOFlow({
-          strategy: "oauth_google",
-          redirectUrl: AuthSession.makeRedirectUri(),
-        });
-      if (createdSessionId) {
-        setActive!({ session: createdSessionId });
-      } else {
-      }
-    } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
-    }
-  }, []);
-
   const onGuestPress = async () => {
     const { data } = await axios.post("/guest/");
+    console.log(data);
     const storageData = {
       id: data._id,
       isGuest: true,
       count: data.count,
       createdAt: data.createdAt,
       imageUrl: data.imageUrl,
-      name: data.name,
+      fullName: data.fullName,
     };
     storage.set("current-user", JSON.stringify(storageData));
     router.replace("/(tabs)");
@@ -88,19 +66,6 @@ const AuthPage = () => {
           <Text style={styles.googleText}>Start as Guest</Text>
           <Image
             source={userGuest}
-            style={styles.googleImage}
-            alt="Google Icon Image"
-            resizeMode="contain"
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={onPress}
-          activeOpacity={0.7}
-          style={styles.googleButton}
-        >
-          <Text style={styles.googleText}>Continue With Google</Text>
-          <Image
-            source={googleImage}
             style={styles.googleImage}
             alt="Google Icon Image"
             resizeMode="contain"

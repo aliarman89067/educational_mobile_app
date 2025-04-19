@@ -1,5 +1,11 @@
-import { ScrollView, StyleSheet, View } from "react-native";
-import React from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import React, { useState } from "react";
 import Navbar from "@/components/navbar";
 import Ad from "@/components/ad";
 import GameHeaders from "@/components/GameHeaders";

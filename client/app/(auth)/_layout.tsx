@@ -1,6 +1,5 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
-import { useAuth } from "@clerk/clerk-expo";
 import { Redirect, router, Slot, usePathname } from "expo-router";
 import { storage } from "@/utils";
 import { colors } from "@/constants/colors";

@@ -1,8 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Entypo from "@expo/vector-icons/Entypo";
-import * as Linking from "expo-linking";
-import { useClerk, useUser } from "@clerk/clerk-expo";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import { bell, logoImage } from "@/constants/images";
@@ -35,11 +32,11 @@ const Navbar = () => {
         <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
           <Image
             source={{ uri: data?.imageUrl }}
-            alt={`${data?.name} profile image`}
+            alt={`${data?.fullName} profile image`}
             style={styles.profileImg}
           />
         </TouchableOpacity>
-        <Text style={styles.nameText}>{data?.name}</Text>
+        <Text style={styles.nameText}>{data?.fullName}</Text>
       </View>
       <Image source={logoImage} style={styles.logoImg} />
       <TouchableOpacity activeOpacity={0.7} style={styles.bellBox}>

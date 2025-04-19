@@ -4,5 +4,5 @@ export type User_Type = {
   count: number;
   createdAt: string;
   imageUrl: string;
-  name: string;
+  fullName: string;
 };

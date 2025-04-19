@@ -31,6 +31,7 @@ import soloIcon from "@/assets/images/icons/soloIcon.png";
 import onlineIcon from "@/assets/images/icons/onlineIcon.png";
 import friendHistoryIcon from "@/assets/images/icons/friendHistoryIcon.png";
 import userGuest from "@/assets/images/icons/user-guest.png";
+import chevronDown from "@/assets/images/icons/chevron-down.png";
 
 export {
   homeImage,
@@ -66,4 +67,5 @@ export {
   onlineIcon,
   friendHistoryIcon,
   userGuest,
+  chevronDown,
 };

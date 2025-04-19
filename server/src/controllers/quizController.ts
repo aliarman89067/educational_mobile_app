@@ -25,6 +25,7 @@ export const getQuizByCategory = async (req: Request, res: Response) => {
         .populate({ path: "years" })
         .select("-topics");
     }
+    console.log(subjects);
     res.status(200).json({ success: true, data: data, subjects });
   } catch (error) {
     console.log(error);
@@ -35,6 +36,7 @@ export const createSoloQuiz = async (req: Request, res: Response) => {
   try {
     const { subjectId, yearIdOrTopicId, quizLimit, quizType, seconds } =
       req.body;
+    console.log(subjectId, yearIdOrTopicId, quizLimit, quizType, seconds);
     if (!subjectId || !yearIdOrTopicId || !quizLimit || !quizType || !seconds) {
       res.status(404).json({
         success: false,
