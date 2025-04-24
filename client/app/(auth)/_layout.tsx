@@ -1,7 +1,7 @@
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Redirect, router, Slot, usePathname } from "expo-router";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 
@@ -24,14 +24,23 @@ const AuthLayout = () => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const currentUser = storage.getString("current-user");
-    if (currentUser) {
-      setTimeout(() => {
-        router.replace("/(tabs)");
-      }, 0);
-    }
-    setIsLoading(false);
-  }, [pathname, router, storage]);
+    const loadUser = async () => {
+      try {
+        setIsLoading(true);
+        const currentUser = await asyncStorage.getItem("current-user");
+        if (currentUser) {
+          setTimeout(() => {
+            router.replace("/(tabs)");
+          }, 0);
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUser();
+  }, [pathname, router]);
   if (isLoading) {
     return (
       <View

@@ -32,6 +32,8 @@ import onlineIcon from "@/assets/images/icons/onlineIcon.png";
 import friendHistoryIcon from "@/assets/images/icons/friendHistoryIcon.png";
 import userGuest from "@/assets/images/icons/user-guest.png";
 import chevronDown from "@/assets/images/icons/chevron-down.png";
+import search from "@/assets/images/icons/search.png";
+import notFound from "@/assets/images/notFound.png";
 
 export {
   homeImage,
@@ -68,4 +70,6 @@ export {
   friendHistoryIcon,
   userGuest,
   chevronDown,
+  search,
+  notFound,
 };

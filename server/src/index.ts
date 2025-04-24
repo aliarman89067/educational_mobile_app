@@ -30,6 +30,7 @@ import OnlineRoomModel from "./models/OnlineRoom";
 import UserModel from "./models/User";
 import OnlineHistoryModel from "./models/OnlineHistory";
 import GuestModel from "./models/Guest";
+import { stat } from "fs";
 
 dotEnv.config();
 
@@ -43,7 +44,6 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  console.log(socket.id);
   const createRoom = async (data: any) => {
     const {
       subjectId,
@@ -79,6 +79,7 @@ io.on("connection", (socket) => {
         sessionId,
         quizLimit,
         quizType,
+        isGuest,
         isAlive: true,
         user: userId,
         [quizType === "Yearly" ? "yearId" : "topicId"]: yearIdOrTopicId,
@@ -148,6 +149,8 @@ io.on("connection", (socket) => {
             user1SessionId: sessionId,
             user2: findSameStudent.user,
             user2SessionId: findSameStudent.sessionId,
+            isGuest1: isGuest,
+            isGuest2: findSameStudent.isGuest,
             [quizType === "Yearly" ? "yearId" : "topicId"]: yearIdOrTopicId,
           },
         };
@@ -172,6 +175,8 @@ io.on("connection", (socket) => {
           newOnlineRoomId: onlineRoom?._id,
           user1Id: onlineRoom?.user1,
           user2Id: onlineRoom?.user2,
+          isGuest1: onlineRoom?.isGuest1,
+          isGuest2: onlineRoom?.isGuest2,
         };
       };
 
@@ -180,21 +185,19 @@ io.on("connection", (socket) => {
       clearTimeout(timeoutId);
 
       if (result) {
-        const { newOnlineRoomId, user1Id, user2Id } = result;
+        const { newOnlineRoomId, user1Id, user2Id, isGuest1, isGuest2 } =
+          result;
         const isUser1 = user1Id === userId;
         const opponentId = isUser1 ? user2Id : user1Id;
+        const isOpponentGuest = isUser1 ? isGuest2 : isGuest1;
 
         let opponentUser: any;
 
-        if (isGuest) {
+        if (isOpponentGuest) {
           opponentUser = await GuestModel.findOne({ _id: opponentId });
         } else {
-          opponentUser = await UserModel.findOne(
-            { clerkId: opponentId },
-            "fullName imageUrl"
-          );
+          opponentUser = await UserModel.findOne({ _id: opponentId });
         }
-
         // Verify room readiness
         let roomValid = false;
         for (let i = 0; i < 10; i++) {
@@ -418,6 +421,85 @@ io.on("connection", (socket) => {
       });
     }
   };
+  const handleAddFriend = async (data: any) => {
+    const { userId, friendId, friendSessionId } = data;
+    if (!userId || !friendId || !friendSessionId) {
+      socket.emit("friend-payload-error", { data: "Payload is wrong" });
+      return;
+    }
+    const session = await mongoose.startSession();
+    try {
+      let status: string = "added";
+      session.startTransaction();
+      const existingFriend = await UserModel.findById(friendId).session(
+        session
+      );
+      if (!existingFriend) {
+        socket.emit("friend-payload-error", { data: "Payload is wrong" });
+        return;
+      }
+      const isAlreadyAdded = existingFriend.requestsRecieved.includes(userId);
+
+      let friendData: any;
+      if (isAlreadyAdded) {
+        friendData = await UserModel.findByIdAndUpdate(
+          friendId,
+          { $pull: { requestsRecieved: userId } },
+          { session }
+        );
+        status = "removed";
+      } else {
+        friendData = await UserModel.findByIdAndUpdate(
+          friendId,
+          { $push: { requestsRecieved: userId } },
+          { session }
+        );
+        status = "added";
+      }
+
+      const existingMyData = await UserModel.findById(userId).session(session);
+      if (!existingMyData) {
+        socket.emit("friend-payload-error", { data: "Payload is wrong" });
+        return;
+      }
+
+      const isAlreadyMyData = existingMyData.requestsSend.includes(friendId);
+      let myData: any;
+      if (isAlreadyMyData) {
+        myData = await UserModel.findByIdAndUpdate(
+          userId,
+          { $pull: { requestsSend: friendId } },
+          { session }
+        );
+      } else {
+        myData = await UserModel.findByIdAndUpdate(
+          userId,
+          { $push: { requestsSend: friendId } },
+          { session }
+        );
+      }
+
+      await session.commitTransaction();
+      io.to(friendData?.sessionId as string).emit("request-received", {
+        fullName: myData?.fullName,
+        emailAddress: myData?.emailAddress,
+        imageUrl: myData?.imageUrl,
+        id: myData?._id,
+        sessionId: myData?.sessionId,
+        status,
+      });
+      socket.emit("update-friend-state", {
+        status,
+        friendId,
+        userId,
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      console.log(error);
+    } finally {
+      await session.endSession();
+    }
+  };
 
   socket.on("create-online-room", createRoom);
   socket.on("online-submit", submitOnlineRoom);
@@ -425,6 +507,7 @@ io.on("connection", (socket) => {
   socket.on("online-resign-by-leave", leaveByResign);
   socket.on("get-online-history", getOnlineHistory);
   socket.on("opponent-quiz-index", handleOpponentIndex);
+  socket.on("add-friend", handleAddFriend);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
@@ -433,6 +516,7 @@ io.on("connection", (socket) => {
     socket.off("online-resign-by-leave", leaveByResign);
     socket.off("get-online-history", getOnlineHistory);
     socket.off("opponent-quiz-index", handleOpponentIndex);
+    socket.off("add-friend", handleAddFriend);
   });
 });
 

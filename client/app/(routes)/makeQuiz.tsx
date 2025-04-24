@@ -20,7 +20,7 @@ import FindingTimer from "@/components/findingTimer";
 import { noOpponentFound } from "@/constants/images";
 import { useSocket } from "@/context/SocketContext";
 import { useSocketStore } from "@/context/zustandStore";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { User_Type } from "@/utils/type";
 import SelectInput from "@/components/SelectInput";
 
@@ -143,14 +143,15 @@ const MakeQuiz = () => {
   const [userData, setUserData] = useState<User_Type | null>(null);
 
   useEffect(() => {
-    const userDataString = storage.getString("current-user");
-    if (!userDataString) {
-      router.push("/(auth)");
-      return;
-    }
-    setUserData(JSON.parse(userDataString));
     const loadQuiz = async () => {
       try {
+        const userDataString = await asyncStorage.getItem("current-user");
+        if (!userDataString) {
+          router.push("/(auth)");
+          return;
+        }
+        setUserData(JSON.parse(userDataString));
+
         const { data } = await axios.get(
           `/quiz/get-all/${selectedCategory?.value}`
         );
@@ -730,7 +731,7 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     backgroundColor: "#fff",
-    zIndex: 100,
+    zIndex: 150,
     paddingHorizontal: 10,
   },
   onlineContent: {

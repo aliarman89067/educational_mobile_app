@@ -3,6 +3,7 @@ import { Slot, SplashScreen } from "expo-router";
 import { useFonts } from "expo-font";
 import axios from "axios";
 import { SocketProvider } from "@/context/SocketContext";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +21,15 @@ const Layout = () => {
       SplashScreen.hideAsync();
     }
   }, [loaded, error]);
+
+  useEffect(() => {
+    GoogleSignin.configure({
+      iosClientId:
+        "791454953921-46gv6gs1f5shlec7elrmiecb0gv47vpn.apps.googleusercontent.com",
+      webClientId:
+        "791454953921-mqv697l3v5ccgd3p1e5156mdp6jspcle.apps.googleusercontent.com",
+    });
+  }, []);
 
   if (!loaded || error) return;
 

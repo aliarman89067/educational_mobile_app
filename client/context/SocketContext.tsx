@@ -1,6 +1,8 @@
 import { createContext, ReactNode, useContext, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import { useSocketStore } from "./zustandStore";
+import asyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 
 interface Props {
   socketIo: Socket;
@@ -22,8 +24,17 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
     const socketIo = socketInstance;
 
-    const handleConnect = () => {
+    const handleConnect = async () => {
+      const userDataString = await asyncStorage.getItem("current-user");
+
       addSessionId(socketIo.id);
+      if (userDataString) {
+        const userDataParse = JSON.parse(userDataString);
+        await axios.put("/user/updateSession", {
+          sessionId: socketIo.id,
+          userId: userDataParse.id,
+        });
+      }
     };
 
     socketIo.on("connect", handleConnect);

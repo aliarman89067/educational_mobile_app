@@ -1,3 +1,5 @@
-import { MMKV } from "react-native-mmkv";
+import { Dimensions } from "react-native";
 
-export const storage = new MMKV();
+const { height: screenHeight } = Dimensions.get("window");
+
+export { screenHeight };

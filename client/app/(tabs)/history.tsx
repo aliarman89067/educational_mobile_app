@@ -16,7 +16,7 @@ import { fontFamily } from "@/constants/fonts";
 import Entypo from "@expo/vector-icons/Entypo";
 import CircleChart from "@/components/CircleChart";
 import OnlineHistoryRow from "@/components/OnlineHistoryRow";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { User_Type } from "@/utils/type";
 
 type QuizIdAndValueType = {
@@ -68,7 +68,7 @@ const History = () => {
     const loadHistory = async () => {
       try {
         setIsLoading(true);
-        const userDataString = storage.getString("current-user");
+        const userDataString = await asyncStorage.getItem("current-user");
         if (!userDataString) {
           router.replace("/(auth)");
           return;

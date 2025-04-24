@@ -1,34 +1,153 @@
-import React, { useEffect, useState } from "react";
-import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import { bell, logoImage } from "@/constants/images";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { User_Type } from "@/utils/type";
 import { router } from "expo-router";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { useRequestReceivedStore } from "@/context/zustandStore";
+import axios from "axios";
 
 const Navbar = () => {
   const [data, setData] = useState<User_Type | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const { requests, resetRequests, addRequests } = useRequestReceivedStore();
+  const [isAnime, setIsAnime] = useState(false);
+  const bellAnime = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const userData = storage.getString("current-user");
-    if (userData) {
-      setData(JSON.parse(userData!!));
-    } else {
-      router.replace("/(auth)");
+  const handleStartAnimation = (type: string) => {
+    bellAnime.setValue(0);
+    if (type === "start") {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bellAnime, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bellAnime, {
+            toValue: 2,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bellAnime, {
+            toValue: 3,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
     }
-    setIsLoading(false);
-  }, []);
-
-  const handleLogout = () => {
-    storage.delete("current-user");
-    router.replace("/(auth)");
+    if (type === "stop") {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(bellAnime, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bellAnime, {
+            toValue: 2,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+          Animated.timing(bellAnime, {
+            toValue: 3,
+            duration: 600,
+            easing: Easing.elastic(2),
+            useNativeDriver: true,
+          }),
+        ])
+      ).stop();
+      bellAnime.setValue(0);
+    }
   };
 
+  const bellAnimeInter = bellAnime.interpolate({
+    inputRange: [0, 1, 2, 3],
+    outputRange: ["0deg", "30deg", "-30deg", "0deg"],
+  });
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await asyncStorage.getItem("current-user");
+        if (userData) {
+          const userDataParse = JSON.parse(userData);
+          setData(userDataParse);
+          getUserRequests(userDataParse);
+        } else {
+          router.replace("/(auth)");
+        }
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const getUserRequests = async (userDataParse: User_Type) => {
+    try {
+      if (!userDataParse?.isGuest) {
+        const { data: responseData } = await axios.post(
+          `/user/received-request`,
+          {
+            userId: userDataParse?.id,
+          }
+        );
+        resetRequests();
+        if (responseData.length > 0) {
+          addRequests(responseData);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  console.log("Requests", requests);
+  const handleLogout = async () => {
+    if (data) {
+      if (data.isGuest) {
+        await asyncStorage.removeItem("current-user");
+        resetRequests();
+        router.replace("/(auth)");
+      } else {
+        GoogleSignin.signOut();
+        await asyncStorage.removeItem("current-user");
+        resetRequests();
+        router.replace("/(auth)");
+      }
+    }
+  };
+
+  const requestLength = () => {
+    if (requests && requests.length > 0) {
+      handleStartAnimation("start");
+      return { isNoti: true, count: requests.length };
+    }
+    handleStartAnimation("stop");
+    return { isNoti: false, count: 0 };
+  };
   return (
     <View style={styles.container}>
-      <View>
+      <View style={{ width: 60 }}>
         <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
           <Image
             source={{ uri: data?.imageUrl }}
@@ -36,19 +155,31 @@ const Navbar = () => {
             style={styles.profileImg}
           />
         </TouchableOpacity>
-        <Text style={styles.nameText}>{data?.fullName}</Text>
+        <Text style={styles.nameText}>
+          {data?.fullName.substring(0, 5)}
+          {data?.fullName.length && data?.fullName.length > 5 && "..."}
+        </Text>
       </View>
       <Image source={logoImage} style={styles.logoImg} />
-      <TouchableOpacity activeOpacity={0.7} style={styles.bellBox}>
-        <Image
-          source={bell}
-          alt="Notification bell images"
-          style={styles.bellImg}
-        />
-        <View style={styles.notificationCircle}>
-          <Text style={styles.notificationNumberText}>1</Text>
-        </View>
-      </TouchableOpacity>
+      <View style={{ width: 60 }}>
+        <TouchableOpacity activeOpacity={0.7} style={styles.bellBox}>
+          <Animated.Image
+            source={bell}
+            alt="Notification bell image"
+            style={[
+              styles.bellImg,
+              { transform: [{ rotate: bellAnimeInter }] },
+            ]}
+          />
+          {requestLength().isNoti && (
+            <View style={styles.notificationCircle}>
+              <Text style={styles.notificationNumberText}>
+                {requestLength().count}
+              </Text>
+            </View>
+          )}
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -96,17 +227,17 @@ const styles = StyleSheet.create({
   },
   notificationCircle: {
     position: "absolute",
-    top: 7,
+    top: 3,
     right: 0,
-    width: 16,
-    height: 16,
+    width: 18,
+    height: 18,
     borderRadius: 20,
     backgroundColor: colors.purple,
     alignItems: "center",
     justifyContent: "center",
   },
   notificationNumberText: {
-    fontSize: 10,
+    fontSize: 11,
     color: "white",
     fontFamily: fontFamily.Medium,
   },

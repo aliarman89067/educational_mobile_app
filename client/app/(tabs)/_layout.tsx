@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { router, Tabs } from "expo-router";
 import {
   friendsImage,
@@ -8,7 +8,9 @@ import {
 } from "@/constants/images";
 import { colors } from "@/constants/colors";
 import { useEffect, useState } from "react";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
+import { useSocket } from "@/context/SocketContext";
+import { useRequestReceivedStore } from "@/context/zustandStore";
 
 interface TabBarIconProps {
   focused: boolean;
@@ -38,16 +40,61 @@ const TabBarIcon = ({ focused, icon, label }: TabBarIconProps) => {
 };
 
 const TabsLayout = () => {
-  const [isSignedIn, setIsSignedIn] = useState(false);
-
   useEffect(() => {
-    const currentUser = storage.getString("current-user");
-    console.log(currentUser);
-    if (!currentUser) {
-      setTimeout(() => {
-        router.replace("/(auth)");
-      }, 0);
-    }
+    const loadUser = async () => {
+      const currentUser = await asyncStorage.getItem("current-user");
+
+      if (!currentUser) {
+        setTimeout(() => {
+          router.replace("/(auth)");
+        }, 0);
+      }
+    };
+    loadUser();
+  }, []);
+  const { socketIo } = useSocket();
+  const { addRequest, removeRequest, requests } = useRequestReceivedStore();
+  useEffect(() => {
+    // resetRequests();
+    const handleFriendAdded = () => {};
+    const handleRequestReceived = (data: any) => {
+      const { fullName, emailAddress, imageUrl, id, sessionId, status } = data;
+      console.log(fullName, emailAddress, imageUrl, id, sessionId, status);
+      if (fullName && emailAddress && imageUrl && id && sessionId) {
+        if (status === "added") {
+          addRequest({
+            fullName,
+            emailAddress,
+            imageUrl,
+            id,
+            sessionId,
+          });
+        } else {
+          removeRequest(id);
+        }
+      } else {
+        ToastAndroid.showWithGravity(
+          "Received wrong request data",
+          ToastAndroid.LONG,
+          ToastAndroid.CENTER
+        );
+      }
+    };
+    const handlePayloadError = () => {
+      ToastAndroid.showWithGravity(
+        "Please send correct Data",
+        ToastAndroid.LONG,
+        ToastAndroid.CENTER
+      );
+    };
+    socketIo.on("friend-added", handleFriendAdded);
+    socketIo.on("friend-payload-error", handlePayloadError);
+    socketIo.on("request-received", handleRequestReceived);
+    return () => {
+      socketIo.off("friend-added", handleFriendAdded);
+      socketIo.off("friend-payload-error", handlePayloadError);
+      socketIo.off("request-received", handleRequestReceived);
+    };
   }, []);
   return (
     <Tabs

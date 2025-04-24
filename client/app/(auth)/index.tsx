@@ -1,5 +1,5 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import React, { useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import {
   authBgImage,
   googleImage,
@@ -8,35 +8,90 @@ import {
 } from "@/constants/images";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
-import * as WebBrowser from "expo-web-browser";
-import * as AuthSession from "expo-auth-session";
 import axios from "axios";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
-
-export const useWarmUpBrowser = () => {
-  useEffect(() => {
-    void WebBrowser.warmUpAsync();
-    return () => {
-      void WebBrowser.coolDownAsync();
-    };
-  }, []);
-};
+import {
+  GoogleSignin,
+  isSuccessResponse,
+  isErrorWithCode,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
+import { useSocketStore } from "@/context/zustandStore";
 
 const AuthPage = () => {
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [googleErrorMessage, setGoogleErrorMessage] = useState("");
+  const { sessionId } = useSocketStore();
+
   const onGuestPress = async () => {
-    const { data } = await axios.post("/guest/");
-    console.log(data);
-    const storageData = {
-      id: data._id,
-      isGuest: true,
-      count: data.count,
-      createdAt: data.createdAt,
-      imageUrl: data.imageUrl,
-      fullName: data.fullName,
-    };
-    storage.set("current-user", JSON.stringify(storageData));
-    router.replace("/(tabs)");
+    try {
+      const { data } = await axios.post("/guest/");
+
+      const storageData = {
+        id: data._id,
+        isGuest: true,
+        count: data.count,
+        createdAt: data.createdAt,
+        imageUrl: data.imageUrl,
+        fullName: data.fullName,
+      };
+      await asyncStorage.setItem("current-user", JSON.stringify(storageData));
+      router.replace("/(tabs)");
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleErrorMessage("");
+      setIsGoogleLoading(true);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        const {
+          name: fullName,
+          email: emailAddress,
+          photo: imageUrl,
+        } = response.data.user;
+        const { data } = await axios.post("/user/", {
+          fullName,
+          emailAddress,
+          imageUrl,
+          sessionId,
+        });
+
+        const storageData = {
+          id: data._id,
+          isGuest: false,
+          createdAt: data.createdAt,
+          imageUrl: data.imageUrl,
+          fullName: data.fullName,
+        };
+        await asyncStorage.setItem("current-user", JSON.stringify(storageData));
+        router.replace("/(tabs)");
+      }
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            setGoogleErrorMessage("Google Sign-in is already in progress!");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            setGoogleErrorMessage(
+              "Google Play services are not available or are outdated!"
+            );
+            break;
+          default:
+            setGoogleErrorMessage("An error occurred. Please try again later!");
+        }
+      } else {
+        setGoogleErrorMessage("An error occurred. Please try again later!");
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
   };
 
   return (
@@ -71,6 +126,24 @@ const AuthPage = () => {
             resizeMode="contain"
           />
         </TouchableOpacity>
+        <View style={{ width: "100%", gap: 2, alignItems: "center" }}>
+          <TouchableOpacity
+            onPress={handleGoogleLogin}
+            activeOpacity={0.7}
+            style={styles.googleButton}
+          >
+            <Text style={styles.googleText}>Login with Google</Text>
+            <Image
+              source={googleImage}
+              style={styles.googleImage}
+              alt="Google Icon Image"
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+          {googleErrorMessage && (
+            <Text style={styles.errorText}>{googleErrorMessage}</Text>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -108,7 +181,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     width: "100%",
-    height: 180,
+    height: 200,
     gap: 10,
     borderTopEndRadius: 30,
     borderTopStartRadius: 30,
@@ -130,5 +203,10 @@ const styles = StyleSheet.create({
   },
   googleImage: {
     width: 25,
+  },
+  errorText: {
+    fontSize: 13,
+    fontFamily: fontFamily.Regular,
+    color: "#ff8fa3",
   },
 });

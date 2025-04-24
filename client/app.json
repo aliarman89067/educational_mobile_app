@@ -9,6 +9,7 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
+      "bundleIdentifier": "com.aliarman.mirror",
       "supportsTablet": true
     },
     "android": {
@@ -16,7 +17,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.client"
+      "package": "com.aliarman.mirror"
     },
     "web": {
       "bundler": "metro",
@@ -44,6 +45,12 @@
             "./assets/fonts/OpenSans-ExtraBold.ttf",
             "./assets/fonts/OpenSans-Bold.ttf"
           ]
+        }
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "iosUrlScheme": "com.googleusercontent.apps.791454953921-46gv6gs1f5shlec7elrmiecb0gv47vpn"
         }
       ]
     ],

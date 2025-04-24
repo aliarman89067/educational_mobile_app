@@ -1,4 +1,5 @@
 import {
+  Image,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -15,11 +16,25 @@ import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import QuizResultRow from "@/components/QuizResultRow";
 import BackButton from "@/components/backButton";
+import asyncStorage from "@react-native-async-storage/async-storage";
+import { User_Type } from "@/utils/type";
+import { BlurView } from "expo-blur";
+import { googleImage } from "@/constants/images";
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+  statusCodes,
+} from "@react-native-google-signin/google-signin";
+import { useSocketStore } from "@/context/zustandStore";
 
 const SoloResult = () => {
   const { historyId } = useLocalSearchParams();
+  const { sessionId } = useSocketStore();
   const router = useRouter();
   const pathname = usePathname();
+  const [googleErrorMessage, setGoogleErrorMessage] = useState("");
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
   // States
   const [data, setData] = useState<null | {
@@ -80,9 +95,19 @@ const SoloResult = () => {
     "correct" | "wrong" | "incomplete"
   >("correct");
 
+  const [userData, setUserData] = useState<User_Type | null>(null);
+
   useEffect(() => {
     const loadHistory = async () => {
       try {
+        const userDataString = await asyncStorage.getItem("current-user");
+
+        if (userDataString) {
+          setUserData(JSON.parse(userDataString));
+        } else {
+          router.replace("/(auth)");
+        }
+
         const { data: resultData } = await axios.get(
           `/quiz/get-solo-result/${historyId}`
         );
@@ -211,7 +236,7 @@ const SoloResult = () => {
         "/quiz/reactive-solo-room",
         {
           soloRoomId: data?.soloRoom._id,
-          historyId
+          historyId,
         }
       );
       router.replace({
@@ -228,9 +253,98 @@ const SoloResult = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    try {
+      setGoogleErrorMessage("");
+      setIsGoogleLoading(true);
+      await GoogleSignin.hasPlayServices();
+      const response = await GoogleSignin.signIn();
+      if (isSuccessResponse(response)) {
+        const {
+          name: fullName,
+          email: emailAddress,
+          photo: imageUrl,
+        } = response.data.user;
+        const { data } = await axios.post("/user/migration", {
+          guestId: userData?.id,
+          fullName,
+          emailAddress,
+          imageUrl,
+          sessionId,
+        });
+
+        const storageData = {
+          id: data._id,
+          isGuest: false,
+          createdAt: data.createdAt,
+          imageUrl: data.imageUrl,
+          fullName: data.fullName,
+        };
+        await asyncStorage.setItem("current-user", JSON.stringify(storageData));
+        setUserData(storageData);
+      }
+    } catch (error) {
+      if (isErrorWithCode(error)) {
+        switch (error.code) {
+          case statusCodes.IN_PROGRESS:
+            setGoogleErrorMessage("Google Sign-in is already in progress!");
+            break;
+          case statusCodes.PLAY_SERVICES_NOT_AVAILABLE:
+            setGoogleErrorMessage(
+              "Google Play services are not available or are outdated!"
+            );
+            break;
+          default:
+            setGoogleErrorMessage("An error occurred. Please try again later!");
+        }
+      } else {
+        setGoogleErrorMessage("An error occurred. Please try again later!");
+      }
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
   return (
-    <SafeAreaView>
-      <ScrollView>
+    <SafeAreaView style={{ minHeight: "100%" }}>
+      <ScrollView style={{ minHeight: "100%", position: "relative" }}>
+        {userData?.isGuest && (
+          <BlurView
+            intensity={35}
+            experimentalBlurMethod="dimezisBlurView"
+            style={styles.blurViewContainer}
+          >
+            <View style={styles.blurViewContent}>
+              <View style={{ alignItems: "center", gap: 20, width: "100%" }}>
+                <Text style={styles.blurViewTitle}>
+                  Login to see you're result.
+                </Text>
+                <TouchableOpacity
+                  disabled={isGoogleLoading}
+                  onPress={handleGoogleLogin}
+                  activeOpacity={0.7}
+                  style={styles.blurViewCta}
+                >
+                  <Image
+                    source={googleImage}
+                    alt="Google Image"
+                    resizeMode="contain"
+                    style={{ width: 34, height: 34 }}
+                  />
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.Bold,
+                      fontSize: 20,
+                      color: colors.grayDark,
+                    }}
+                  >
+                    {isGoogleLoading ? "Please Wait..." : "Google"}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </BlurView>
+        )}
         <View style={styles.container}>
           <BackButton />
           <View style={styles.chartContainer}>
@@ -398,6 +512,7 @@ export default SoloResult;
 
 const styles = StyleSheet.create({
   container: {
+    position: "relative",
     flexDirection: "column",
     marginTop: 20,
     paddingHorizontal: 10,
@@ -475,5 +590,36 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     paddingVertical: 20,
     gap: 7,
+  },
+  blurViewContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 100,
+  },
+  blurViewContent: {
+    width: "100%",
+    height: "100%",
+    backgroundColor: "rgba(0,0,0,0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+  },
+  blurViewTitle: {
+    fontFamily: fontFamily.Regular,
+    fontSize: 22,
+    color: "white",
+  },
+  blurViewCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    backgroundColor: "white",
+    borderRadius: 6,
+    width: 300,
+    paddingVertical: 20,
   },
 });

@@ -256,6 +256,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
   };
   try {
     if (!onlineRoomId || !userId) {
+      console.log("Payload is not correct");
       res.status(404).json({
         success: false,
         message: "Params payload is not correct",
@@ -269,6 +270,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
       (!isOnlineRoomAlive?.isUser1Alive && !isOnlineRoomAlive?.isUser2Alive) ||
       !isOnlineRoomAlive
     ) {
+      console.log("This room is expired");
       res.status(200).json({
         success: false,
         error: "room-expired",
@@ -277,6 +279,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
       return;
     }
     if (isOnlineRoomAlive.user1 === userId && !isOnlineRoomAlive.isUser1Alive) {
+      console.log("Room Expired for user 1");
       res.status(200).json({
         success: false,
         error: "room-expired",
@@ -287,6 +290,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
       isOnlineRoomAlive.user2 === userId &&
       !isOnlineRoomAlive.isUser2Alive
     ) {
+      console.log("Room Expired for user 2");
       res.status(200).json({
         success: false,
         error: "room-expired",
@@ -298,6 +302,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
       isOnlineRoomAlive.user1 !== userId &&
       isOnlineRoomAlive.user2 !== userId
     ) {
+      console.log("User id is not matching any of the online room user id's");
       res.status(200).json({
         success: false,
         error: "server-error",
@@ -316,6 +321,9 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
     // Finding opponent
     // Validating that both user exist in online room
     if (!onlineRoomData?.user1 || !onlineRoomData.user2) {
+      console.log(
+        "One user is missing in online room means its not completely updated!"
+      );
       res.status(200).json({
         success: false,
         error: "server-error",
@@ -326,6 +334,11 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
     }
     let opponent;
     let remainingTime: string | null | undefined = "";
+    const isUser1 = onlineRoomData.user1 === userId;
+    const isOpponentGuest = isUser1
+      ? onlineRoomData.isGuest2
+      : onlineRoomData.isGuest1;
+
     if (onlineRoomData.user1 === userId) {
       const updatedOnlineRoom = await OnlineRoomModel.findOneAndUpdate(
         {
@@ -338,13 +351,14 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
         { new: true }
       );
       remainingTime = updatedOnlineRoom?.user1RemainingTime;
-      if (isGuest === "true") {
+
+      if (isOpponentGuest) {
         opponent = await GuestModel.findOne({
           _id: onlineRoomData.user2,
         });
       } else {
         opponent = await UserModel.findOne({
-          clerkId: onlineRoomData.user2,
+          _id: onlineRoomData.user2,
         });
       }
     } else if (onlineRoomData.user2 === userId) {
@@ -359,17 +373,18 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
         { new: true }
       );
       remainingTime = updatedOnlineRoom?.user2RemainingTime;
-      if (isGuest === "true") {
+      if (isOpponentGuest) {
         opponent = await GuestModel.findOne({
           _id: onlineRoomData.user1,
         });
       } else {
         opponent = await UserModel.findOne({
-          clerkId: onlineRoomData.user1,
+          _id: onlineRoomData.user1,
         });
       }
     }
     if (!opponent) {
+      console.log("Can't find your opponent");
       res.status(200).json({
         success: false,
         error: "opponent-left",
@@ -383,6 +398,7 @@ export const getOnlineRoom = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.log(error);
+    console.log("Failed to get online room");
     res
       .status(500)
       .json({ message: `Failed to get online room ${error.message ?? error}` });

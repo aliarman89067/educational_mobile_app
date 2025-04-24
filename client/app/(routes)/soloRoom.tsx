@@ -15,7 +15,7 @@ import { fontFamily } from "@/constants/fonts";
 import Timer from "@/components/timer";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { User_Type } from "@/utils/type";
 
 const SoloRoom = () => {
@@ -70,7 +70,7 @@ const SoloRoom = () => {
         setData(null);
         setIsError(false);
         setIsLoading(true);
-        const userDataString = storage.getString("current-user");
+        const userDataString = await asyncStorage.getItem("current-user");
         if (userDataString) {
           setUserData(JSON.parse(userDataString));
         } else {

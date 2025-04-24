@@ -20,11 +20,12 @@ import { colors } from "@/constants/colors";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import Timer from "@/components/timer";
-import { storage } from "@/utils";
+import asyncStorage from "@react-native-async-storage/async-storage";
 import { User_Type } from "@/utils/type";
 
 const OnlineRoom = () => {
   const { onlineRoomId } = useLocalSearchParams();
+
   const pathname = usePathname();
   // States
   const [isError, setIsError] = useState(false);
@@ -94,18 +95,19 @@ const OnlineRoom = () => {
       router.back();
       return;
     }
-    const userDataString = storage.getString("current-user");
-    if (!userDataString) {
-      router.replace("/(auth)");
-      return;
-    }
-    const userDataParse = JSON.parse(userDataString) as User_Type;
-
-    setUserData(userDataParse);
 
     // Load data function
     const loadData = async () => {
       try {
+        const userDataString = await asyncStorage.getItem("current-user");
+        if (!userDataString) {
+          router.replace("/(auth)");
+          return;
+        }
+        const userDataParse = JSON.parse(userDataString) as User_Type;
+
+        setUserData(userDataParse);
+
         const isGuestString = JSON.stringify(userDataParse.isGuest);
         const { data } = await axios.get(
           `/quiz/get-online-room/${onlineRoomId}/${userDataParse.id}/${isGuestString}/${sessionId}`
@@ -472,8 +474,6 @@ const OnlineRoom = () => {
 
   const isNextDisabled =
     selectedOptionIds && selectedOptionIds[quizIndex] === null;
-
-  console.log(isNextDisabled);
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
