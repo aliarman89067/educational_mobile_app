@@ -11,10 +11,10 @@ import { fontFamily } from "@/constants/fonts";
 import { router } from "expo-router";
 
 const GameHeaders = () => {
-  const handlePlay = (isOnline: string) => {
+  const handlePlay = (type: "solo" | "online" | "friend") => {
     router.push({
       pathname: "/(routes)/makeQuiz",
-      params: { isOnline },
+      params: { type },
     });
   };
   return (
@@ -27,7 +27,7 @@ const GameHeaders = () => {
         />
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            onPress={() => handlePlay("true")}
+            onPress={() => handlePlay("online")}
             style={styles.button}
             activeOpacity={0.7}
           >
@@ -53,7 +53,11 @@ const GameHeaders = () => {
           style={styles.headerImg}
         />
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} activeOpacity={0.7}>
+          <TouchableOpacity
+            onPress={() => handlePlay("friend")}
+            style={styles.button}
+            activeOpacity={0.7}
+          >
             <Text style={styles.buttonText}>Request Friend</Text>
           </TouchableOpacity>
         </View>
@@ -66,7 +70,7 @@ const GameHeaders = () => {
         />
         <View style={styles.buttonContainer}>
           <TouchableOpacity
-            onPress={() => handlePlay("false")}
+            onPress={() => handlePlay("solo")}
             style={styles.button}
             activeOpacity={0.7}
           >

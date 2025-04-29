@@ -57,4 +57,34 @@ export const useRequestReceivedStore = create<UseRequestReceivedStore>()(
     }
   )
 );
-// Try Async Storage rather than sessionStorage
+
+interface UseRequestQuizData {
+  roomId: string;
+  subject: string;
+  type: string;
+  topicOrYear: string;
+  friendSessionId: string;
+  friendId: string;
+  name: string;
+  imageUrl: string;
+  length: number;
+  seconds: number;
+}
+
+interface UseRequestQuizReceivedStore {
+  data: UseRequestQuizData | null;
+  addData: (values: UseRequestQuizData) => void;
+  removeData: () => void;
+}
+
+export const useRequestQuizReceivedStore = create<UseRequestQuizReceivedStore>(
+  (set, get) => ({
+    data: null,
+    addData: (data) => {
+      set({ data });
+    },
+    removeData: () => {
+      set({ data: null });
+    },
+  })
+);

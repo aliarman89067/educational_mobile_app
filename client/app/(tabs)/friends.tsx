@@ -16,7 +16,7 @@ import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import { Friend_Type, User_Type } from "@/utils/type";
 import asyncStorage from "@react-native-async-storage/async-storage";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import axios from "axios";
 import { BlurView } from "expo-blur";
 import {
@@ -35,6 +35,9 @@ const friends = () => {
   const [input, setInput] = useState("");
   const [isUserLoading, setIsUserLoading] = useState(true);
   const [userData, setUserData] = useState<User_Type | null>(null);
+  const [searchFriends, setSearchFriends] = useState<Friend_Type[] | null>(
+    null
+  );
   const [friendsData, setFriendsData] = useState<Friend_Type[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGuestError, setIsGuestError] = useState(false);
@@ -43,15 +46,25 @@ const friends = () => {
 
   const { socketIo } = useSocket();
   const { sessionId } = useSocketStore();
+  const pathname = usePathname();
 
   useEffect(() => {
     // resetRequests();
     const loadUser = async () => {
+      setInput("");
+      setSearchFriends(null);
       try {
         setIsUserLoading(true);
         const userDataString = await asyncStorage.getItem("current-user");
         if (userDataString) {
-          setUserData(JSON.parse(userDataString));
+          const userDataParse = JSON.parse(userDataString);
+          setUserData(userDataParse);
+          if (!userDataParse.isGuest) {
+            const { data } = await axios.post(
+              `/user/get-friends/${userDataParse.id}`
+            );
+            setFriendsData(data);
+          }
         } else {
           router.replace("/(auth)");
         }
@@ -62,13 +75,13 @@ const friends = () => {
       }
     };
     loadUser();
-  }, []);
+  }, [pathname, router]);
 
   useEffect(() => {
     const handleUpdateFriendsState = (data: any) => {
       const { userId, status, friendId } = data;
-      console.log(userId, status, friendId);
-      setFriendsData((prevData) => {
+
+      setSearchFriends((prevData) => {
         if (!prevData) return prevData;
         return prevData.map((friend) => {
           if (friend._id === friendId) {
@@ -102,7 +115,7 @@ const friends = () => {
     try {
       setIsLoading(true);
       const { data } = await axios.get(`/user/${input}/${userData?.id}`);
-      setFriendsData(data);
+      setSearchFriends(data);
     } catch (error) {
       console.log(error);
     } finally {
@@ -157,6 +170,29 @@ const friends = () => {
       </View>
     );
   }
+
+  const handleUnfriendRequest = async (friendId: string) => {
+    try {
+      await axios.put("/user/unfriend", { friendId, userId: userData?.id });
+      setSearchFriends((prevData) => {
+        if (!prevData) return prevData;
+        return prevData.map((friend) => {
+          if (friend._id === friendId) {
+            return {
+              ...friend,
+              friends: friend.requestsRecieved.filter(
+                (item) => item !== userData?.id
+              ),
+            };
+          } else {
+            return friend;
+          }
+        });
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   const handleGoogleLogin = async () => {
     try {
@@ -273,49 +309,175 @@ const friends = () => {
             />
           </TouchableOpacity>
         </View>
-        {friendsData && friendsData.length > 0 && (
-          <FlatList
-            contentContainerStyle={{ marginTop: 20, gap: 6 }}
-            data={friendsData}
-            keyExtractor={(item) => item._id}
-            renderItem={({ item }) => (
-              <View key={item._id} style={styles.friendRow}>
-                <Image
-                  source={{ uri: item.imageUrl }}
-                  alt="Image Url"
-                  resizeMode="cover"
-                  style={styles.friendImg}
-                />
-                <View style={styles.friendInfoBox}>
-                  <Text style={styles.friendName}>
-                    {item.fullName.substring(0, 10)}
-                    {item.fullName.length > 10 && "..."}
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              {input && searchFriends && searchFriends.length > 0 && (
+                <View style={{ marginVertical: 10 }}>
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.Medium,
+                      fontSize: 18,
+                      color: colors.grayLight,
+                    }}
+                  >
+                    Results for {`"${input}"`} ({searchFriends.length})
                   </Text>
-                  <Text style={styles.friendRanking}>2000 Ranking</Text>
                 </View>
-                {userData && item.requestsRecieved.includes(userData?.id) ? (
-                  <TouchableOpacity
-                    onPress={() => handleAddFriend(item._id, item.sessionId)}
-                    activeOpacity={0.7}
-                    style={[
-                      styles.addFriendButton,
-                      { backgroundColor: "#ff4d6d" },
-                    ]}
-                  >
-                    <Text style={styles.addFriendText}>Cancel</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity
-                    onPress={() => handleAddFriend(item._id, item.sessionId)}
-                    activeOpacity={0.7}
-                    style={styles.addFriendButton}
-                  >
-                    <Text style={styles.addFriendText}>Add</Text>
-                  </TouchableOpacity>
-                )}
+              )}
+            </>
+          }
+          ListFooterComponent={
+            <FlatList
+              showsVerticalScrollIndicator={false}
+              data={friendsData}
+              keyExtractor={(item) => item._id}
+              style={{
+                marginTop: searchFriends && searchFriends.length > 0 ? 25 : 0,
+              }}
+              ListHeaderComponent={
+                <>
+                  {friendsData && friendsData.length > 0 && (
+                    <View style={{ marginVertical: 10 }}>
+                      <Text
+                        style={{
+                          fontFamily: fontFamily.Medium,
+                          fontSize: 18,
+                          color: colors.grayLight,
+                        }}
+                      >
+                        Your {friendsData.length > 1 ? "Friends" : "Friend"} (
+                        {friendsData.length})
+                      </Text>
+                    </View>
+                  )}
+                </>
+              }
+              renderItem={({ item }) => (
+                <View key={item._id} style={styles.friendRow}>
+                  <Image
+                    source={{ uri: item.imageUrl }}
+                    alt="Image Url"
+                    resizeMode="cover"
+                    style={styles.friendImg}
+                  />
+                  <View style={styles.friendInfoBox}>
+                    <Text style={styles.friendName}>
+                      {item.fullName.substring(0, 10)}
+                      {item.fullName.length > 10 && "..."}
+                    </Text>
+                    <Text style={styles.friendRanking}>2000 Ranking</Text>
+                  </View>
+                  {userData && item.friends.includes(userData.id) ? (
+                    <TouchableOpacity
+                      onPress={() => handleUnfriendRequest(item._id)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.addFriendButton,
+                        { backgroundColor: "#ff4d6d" },
+                      ]}
+                    >
+                      <Text style={styles.addFriendText}>Unfriend</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <>
+                      {userData &&
+                      item.requestsRecieved.includes(userData?.id) ? (
+                        <TouchableOpacity
+                          onPress={() =>
+                            handleAddFriend(item._id, item.sessionId)
+                          }
+                          activeOpacity={0.7}
+                          style={[
+                            styles.addFriendButton,
+                            { backgroundColor: "#ff4d6d" },
+                          ]}
+                        >
+                          <Text style={styles.addFriendText}>Cancel</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity
+                          onPress={() =>
+                            handleAddFriend(item._id, item.sessionId)
+                          }
+                          activeOpacity={0.7}
+                          style={styles.addFriendButton}
+                        >
+                          <Text style={styles.addFriendText}>Add</Text>
+                        </TouchableOpacity>
+                      )}
+                    </>
+                  )}
+                </View>
+              )}
+            />
+          }
+          contentContainerStyle={{ marginTop: 0, gap: 6 }}
+          data={searchFriends}
+          keyExtractor={(item) => item._id}
+          renderItem={({ item }) => (
+            <View key={item._id} style={styles.friendRow}>
+              <Image
+                source={{ uri: item.imageUrl }}
+                alt="Image Url"
+                resizeMode="cover"
+                style={styles.friendImg}
+              />
+              <View style={styles.friendInfoBox}>
+                <Text style={styles.friendName}>
+                  {item.fullName.substring(0, 10)}
+                  {item.fullName.length > 10 && "..."}
+                </Text>
+                <Text style={styles.friendRanking}>2000 Ranking</Text>
               </View>
-            )}
-          />
+              {userData && item.friends.includes(userData.id) ? (
+                <TouchableOpacity
+                  onPress={() => handleUnfriendRequest(item._id)}
+                  activeOpacity={0.7}
+                  style={[
+                    styles.addFriendButton,
+                    { backgroundColor: "#ff4d6d" },
+                  ]}
+                >
+                  <Text style={styles.addFriendText}>Unfriend</Text>
+                </TouchableOpacity>
+              ) : (
+                <>
+                  {userData && item.requestsRecieved.includes(userData?.id) ? (
+                    <TouchableOpacity
+                      onPress={() => handleAddFriend(item._id, item.sessionId)}
+                      activeOpacity={0.7}
+                      style={[
+                        styles.addFriendButton,
+                        { backgroundColor: "#ff4d6d" },
+                      ]}
+                    >
+                      <Text style={styles.addFriendText}>Cancel</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      onPress={() => handleAddFriend(item._id, item.sessionId)}
+                      activeOpacity={0.7}
+                      style={styles.addFriendButton}
+                    >
+                      <Text style={styles.addFriendText}>Add</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+          )}
+        />
+        {searchFriends && searchFriends.length === 0 && (
+          <View style={styles.notFoundContainer}>
+            <Image
+              source={notFound}
+              alt="Not found Image"
+              style={styles.notFoundImg}
+            />
+            <Text style={styles.notFoundText}>No results found.</Text>
+          </View>
         )}
         {friendsData && friendsData.length === 0 && (
           <View style={styles.notFoundContainer}>

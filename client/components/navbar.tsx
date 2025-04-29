@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  Dimensions,
   Easing,
   Image,
   StyleSheet,
@@ -17,6 +18,7 @@ import { router } from "expo-router";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import { useRequestReceivedStore } from "@/context/zustandStore";
 import axios from "axios";
+import NotificationContainer from "./NotificationContainer";
 
 const Navbar = () => {
   const [data, setData] = useState<User_Type | null>(null);
@@ -24,6 +26,9 @@ const Navbar = () => {
   const { requests, resetRequests, addRequests } = useRequestReceivedStore();
   const [isAnime, setIsAnime] = useState(false);
   const bellAnime = useRef(new Animated.Value(0)).current;
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+
+  const { width, height } = Dimensions.get("window");
 
   const handleStartAnimation = (type: string) => {
     bellAnime.setValue(0);
@@ -52,29 +57,12 @@ const Navbar = () => {
       ).start();
     }
     if (type === "stop") {
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(bellAnime, {
-            toValue: 1,
-            duration: 600,
-            easing: Easing.elastic(2),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bellAnime, {
-            toValue: 2,
-            duration: 600,
-            easing: Easing.elastic(2),
-            useNativeDriver: true,
-          }),
-          Animated.timing(bellAnime, {
-            toValue: 3,
-            duration: 600,
-            easing: Easing.elastic(2),
-            useNativeDriver: true,
-          }),
-        ])
-      ).stop();
-      bellAnime.setValue(0);
+      Animated.timing(bellAnime, {
+        toValue: 0,
+        duration: 600,
+        easing: Easing.elastic(2),
+        useNativeDriver: true,
+      }).start();
     }
   };
 
@@ -121,7 +109,6 @@ const Navbar = () => {
       console.log(error);
     }
   };
-  console.log("Requests", requests);
   const handleLogout = async () => {
     if (data) {
       if (data.isGuest) {
@@ -147,6 +134,13 @@ const Navbar = () => {
   };
   return (
     <View style={styles.container}>
+      {isNotificationOpen && (
+        <NotificationContainer
+          isOpen={isNotificationOpen}
+          setIsOpen={setIsNotificationOpen}
+          userData={data}
+        />
+      )}
       <View style={{ width: 60 }}>
         <TouchableOpacity onPress={handleLogout} activeOpacity={0.7}>
           <Image
@@ -162,7 +156,11 @@ const Navbar = () => {
       </View>
       <Image source={logoImage} style={styles.logoImg} />
       <View style={{ width: 60 }}>
-        <TouchableOpacity activeOpacity={0.7} style={styles.bellBox}>
+        <TouchableOpacity
+          onPress={() => setIsNotificationOpen(true)}
+          activeOpacity={0.7}
+          style={styles.bellBox}
+        >
           <Animated.Image
             source={bell}
             alt="Notification bell image"
@@ -188,6 +186,7 @@ export default Navbar;
 
 const styles = StyleSheet.create({
   container: {
+    position: "relative",
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",

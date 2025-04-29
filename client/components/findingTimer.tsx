@@ -28,7 +28,7 @@ const FindingTimer = ({ time, isStart, fn }: Props) => {
           }
           return prev;
         });
-      }, 800);
+      }, 1000);
     }
 
     return () => clearInterval(interval.current);

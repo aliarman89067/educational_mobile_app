@@ -8,6 +8,7 @@ import OnlineRoomModel from "../models/OnlineRoom";
 import UserModel from "../models/User";
 import OnlineHistoryModel from "../models/OnlineHistory";
 import GuestModel from "../models/Guest";
+import FriendRoomModel from "../models/FriendRoom";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -531,5 +532,76 @@ export const getOnlineResult = async (req: Request, res: Response) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, message: "Something went wrong" });
+  }
+};
+
+export const createFriendRoom = async (req: Request, res: Response) => {
+  const {
+    subjectId,
+    yearIdOrTopicId,
+    quizLimit,
+    quizType,
+    isGuest,
+    userId,
+    name,
+    imageUrl,
+    sessionId,
+    seconds,
+  } = req.body;
+  try {
+    if (
+      !subjectId ||
+      !yearIdOrTopicId ||
+      !quizLimit ||
+      !quizType ||
+      !userId ||
+      !name ||
+      !imageUrl ||
+      !sessionId ||
+      !seconds
+    ) {
+      console.log("Payload is not correct");
+      res.status(404).json({ message: "Payload is not correct" });
+      return;
+    }
+
+    let data: any;
+    if (quizType === "Yearly") {
+      data = await yearModel.findOne({ _id: yearIdOrTopicId }).select("mcqs");
+    } else if (quizType === "Topical") {
+      data = await topicModel.findOne({ _id: yearIdOrTopicId }).select("mcqs");
+    } else {
+      res.status(404).json({
+        success: false,
+        message: "Quiz Type is not correct!",
+      });
+      return;
+    }
+    const targetQuiz: any = [];
+    while (targetQuiz.length < quizLimit) {
+      const randomQuizId =
+        data.mcqs[Math.ceil(Math.random() * data.mcqs.length - 1)];
+      if (!targetQuiz.includes(randomQuizId)) {
+        targetQuiz.push(randomQuizId);
+      }
+    }
+
+    const newFriendRoom = new FriendRoomModel({
+      subjectId,
+      [quizType === "Topical" ? "topicId" : "yearId"]: yearIdOrTopicId,
+      quizType: quizType === "Topical" ? "Topical" : "Yearly",
+      quizes: targetQuiz,
+      user1: userId,
+      user1SessionId: sessionId,
+      isUser1Alive: true,
+      seconds,
+      status: "pending",
+      isGuest1: isGuest,
+    });
+    await newFriendRoom.save();
+    res.status(201).json({ roomId: newFriendRoom.id });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Failed to create friend room" });
   }
 };

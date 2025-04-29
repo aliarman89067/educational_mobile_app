@@ -31,6 +31,7 @@ import UserModel from "./models/User";
 import OnlineHistoryModel from "./models/OnlineHistory";
 import GuestModel from "./models/Guest";
 import { stat } from "fs";
+import FriendRoomModel from "./models/FriendRoom";
 
 dotEnv.config();
 
@@ -500,6 +501,90 @@ io.on("connection", (socket) => {
       await session.endSession();
     }
   };
+  const handleSendQuizRequest = async (data: any) => {
+    const { roomId, friendId, userId } = data;
+    try {
+      const existingFriend = await UserModel.findById(friendId);
+      if (!existingFriend) {
+        console.log("Friend not found!");
+        socket.emit("request-payload-error", { message: "Friend not found!" });
+        return;
+      }
+      const existingUser = await UserModel.findById(userId);
+      if (!existingUser) {
+        console.log("User not found!");
+        socket.emit("request-payload-error", { message: "User not found!" });
+        return;
+      }
+      const existingRoom = await FriendRoomModel.findOne({
+        _id: roomId,
+        status: "pending",
+      })
+        .populate({ path: "subjectId" })
+        .populate({ path: "yearId" })
+        .populate({ path: "topicId" });
+      if (!existingRoom) {
+        console.log("Friend room is not found!");
+        socket.emit("request-payload-error", { message: "Friend not found!" });
+        return;
+      }
+      const friendData = {
+        roomId,
+        // @ts-ignore
+        subject: existingRoom.subjectId.subject,
+        // @ts-ignore
+        type: existingRoom.quizType,
+        topicOrYear:
+          existingRoom.quizType === "Yearly"
+            ? // @ts-ignore
+              existingRoom.yearId.year
+            : // @ts-ignore
+              existingRoom.topicId.topic,
+        friendSessionId: existingUser.sessionId,
+        friendId: existingUser.id,
+        name: existingUser.fullName,
+        imageUrl: existingUser.imageUrl,
+        length: existingRoom.quizes.length,
+        seconds: existingRoom.seconds,
+      };
+      io.to(existingFriend.sessionId as string).emit(
+        "quiz-request-receive",
+        friendData
+      );
+      const userData = {
+        roomId,
+        // @ts-ignore
+        subject: existingRoom.subjectId.subject,
+        // @ts-ignore
+        type: existingRoom.quizType,
+        topicOrYear:
+          existingRoom.quizType === "Yearly"
+            ? // @ts-ignore
+              existingRoom.yearId.year
+            : // @ts-ignore
+              existingRoom.topicId.topic,
+        friendSessionId: existingFriend.sessionId,
+        friendId: existingFriend.id,
+        name: existingFriend.fullName,
+        imageUrl: existingFriend.imageUrl,
+        length: existingRoom.quizes.length,
+        seconds: existingRoom.seconds,
+      };
+      socket.emit("quiz-request-sended", userData);
+      // await FriendRoomModel.findByIdAndUpdate(
+      //   roomId,
+      //   {
+      //     user2: existingFriend.id,
+      //     user2SessionId: existingFriend.sessionId,
+      //     isUser2Alive: true,
+      //   },
+      //   { new: true }
+      // );
+    } catch (error) {
+      console.log(error);
+      socket.emit("request-server-error", { message: "Something went wrong" });
+    }
+  };
 
   socket.on("create-online-room", createRoom);
   socket.on("online-submit", submitOnlineRoom);
@@ -508,6 +593,8 @@ io.on("connection", (socket) => {
   socket.on("get-online-history", getOnlineHistory);
   socket.on("opponent-quiz-index", handleOpponentIndex);
   socket.on("add-friend", handleAddFriend);
+  socket.on("add-friend", handleAddFriend);
+  socket.on("send-quiz-request", handleSendQuizRequest);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
@@ -517,6 +604,7 @@ io.on("connection", (socket) => {
     socket.off("get-online-history", getOnlineHistory);
     socket.off("opponent-quiz-index", handleOpponentIndex);
     socket.off("add-friend", handleAddFriend);
+    socket.off("send-quiz-request", handleSendQuizRequest);
   });
 });
 

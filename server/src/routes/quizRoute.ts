@@ -9,7 +9,9 @@ import {
   getOnlineRoom,
   getOnlineResult,
   reactiveSoloRoom,
+  createFriendRoom,
 } from "../controllers/quizController";
+import { disabledFriendRoom } from "../controllers/userController";
 
 const router = express.Router();
 
@@ -25,5 +27,7 @@ router.get(
   getOnlineRoom
 );
 router.get("/get-online-history/:resultId/:roomId/:isGuest", getOnlineResult);
+router.post("/create-friendroom", createFriendRoom);
+router.put("/disabled-friend-room", disabledFriendRoom);
 
 export default router;

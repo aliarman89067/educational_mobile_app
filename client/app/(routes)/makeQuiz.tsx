@@ -10,9 +10,9 @@ import {
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { colors } from "@/constants/colors";
-import { router, useLocalSearchParams, usePathname } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import BackButton from "@/components/backButton";
-import { SelectDropdown, DropdownData } from "expo-select-dropdown";
+// import { SelectDropdown, DropdownData } from "expo-select-dropdown"; TODO: Remove this lib
 import axios from "axios";
 import { fontFamily } from "@/constants/fonts";
 import LottieView from "lottie-react-native";
@@ -25,10 +25,9 @@ import { User_Type } from "@/utils/type";
 import SelectInput from "@/components/SelectInput";
 
 const MakeQuiz = () => {
-  const pathname = usePathname();
   const { socketIo } = useSocket();
   const { sessionId } = useSocketStore();
-  const { isOnline } = useLocalSearchParams() as { isOnline: string };
+  const { type } = useLocalSearchParams() as { type: string };
 
   const [isInitialLoadingLoading, setIsInitialLoading] = useState(true);
 
@@ -141,6 +140,7 @@ const MakeQuiz = () => {
   }>(null);
   const [onlineRoomId, setOnlineRoomId] = useState("");
   const [userData, setUserData] = useState<User_Type | null>(null);
+  const [isFriendLoading, setIsFriendLoading] = useState(false);
 
   useEffect(() => {
     const loadQuiz = async () => {
@@ -304,6 +304,61 @@ const MakeQuiz = () => {
     } finally {
     }
   };
+
+  const handleFriendPlay = async () => {
+    if (
+      !selectedSubject ||
+      !selectedSubject?.id ||
+      (!selectedTopic && !selectedYear) ||
+      !userData ||
+      !userData.id ||
+      !selectedTime ||
+      !sessionId ||
+      !selectedTime.id
+    ) {
+      ToastAndroid.showWithGravity(
+        "Please Select all Fields!",
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+      return;
+    }
+    if (!userData || !userData.id) {
+      ToastAndroid.showWithGravity(
+        "Your not authenticated!",
+        ToastAndroid.SHORT,
+        ToastAndroid.CENTER
+      );
+      return;
+    }
+    try {
+      setIsFriendLoading(true);
+      const friendData = {
+        subjectId: selectedSubject.id,
+        yearIdOrTopicId: selectedTopic?.id ?? selectedYear?.id,
+        quizLimit: Number(selectedLength?.id),
+        quizType: selectedCategory?.value,
+        isGuest: userData.isGuest,
+        userId: userData.id,
+        name: userData.fullName,
+        imageUrl: userData.imageUrl,
+        sessionId,
+        seconds: selectedTime.id,
+      };
+
+      const { data } = await axios.post("/quiz/create-friendroom", friendData);
+
+      router.push({
+        pathname: "/(routes)/selectFriend",
+        params: { roomId: data.roomId },
+      });
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsFriendLoading(false);
+    }
+  };
+
   const handleOnlineCancel = () => {
     setIsOpponentFinding(false);
     setIsOnlineModal(false);
@@ -318,9 +373,6 @@ const MakeQuiz = () => {
     setIsOnlineModal(false);
     setNotFound(false);
     router.push({ pathname: "/(routes)/onlineRoom", params: { onlineRoomId } });
-  };
-  const handleChangeCategory = async (category: string) => {
-    const { data } = await axios.get(`/quiz/get-all/${category}`);
   };
   return (
     <SafeAreaView style={{ flex: 1 }}>
@@ -638,14 +690,27 @@ const MakeQuiz = () => {
                 />
               </View>
               <TouchableOpacity
+                disabled={isFriendLoading || isLoading}
                 onPress={
-                  JSON.parse(isOnline) ? handleOnlinePlay : handleSoloPlay
+                  type === "solo"
+                    ? handleSoloPlay
+                    : type === "online"
+                    ? handleOnlinePlay
+                    : type === "friend"
+                    ? handleFriendPlay
+                    : () => {}
                 }
                 activeOpacity={0.7}
                 style={styles.playButton}
               >
                 <Text style={styles.playText}>
-                  {JSON.parse(isOnline) ? "Find Player" : "Play"}
+                  {type === "online"
+                    ? "Find Player"
+                    : type === "solo"
+                    ? "Play"
+                    : type === "friend"
+                    ? "Join Friend"
+                    : ""}
                 </Text>
               </TouchableOpacity>
             </View>

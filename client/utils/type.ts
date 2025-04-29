@@ -14,4 +14,5 @@ export type Friend_Type = {
   sessionId: string;
   requestsSend: string[];
   requestsRecieved: string[];
+  friends: string[];
 };

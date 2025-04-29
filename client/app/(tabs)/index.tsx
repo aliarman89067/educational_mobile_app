@@ -11,8 +11,13 @@ import Ad from "@/components/ad";
 import GameHeaders from "@/components/GameHeaders";
 import HomeFriends from "@/components/homeFriends";
 import HomeHistory from "@/components/homeHistory";
+import { useRequestQuizReceivedStore } from "@/context/zustandStore";
 
 const Home = () => {
+  const { data } = useRequestQuizReceivedStore();
+
+  console.log(data);
+
   return (
     <View style={styles.container}>
       <Navbar />
