@@ -32,6 +32,7 @@ import OnlineHistoryModel from "./models/OnlineHistory";
 import GuestModel from "./models/Guest";
 import { stat } from "fs";
 import FriendRoomModel from "./models/FriendRoom";
+import FriendHistoryModel from "./models/FriendHistory";
 
 dotEnv.config();
 
@@ -345,7 +346,7 @@ io.on("connection", (socket) => {
     }
   };
 
-  const leaveByResign = async (data: any) => {
+  const leaveByOnlineResign = async (data: any) => {
     const { completeTime, mcqs, roomId, selectedStates, userId } = data;
     if (completeTime || mcqs || roomId || selectedStates || userId) {
       // Finding and Validating and Updating Online Room Logic
@@ -399,6 +400,7 @@ io.on("connection", (socket) => {
         // TODO:Handling Error
       }
     } else {
+      console.log("Resign payload is not correct");
       // TODO:Handling Error
     }
   };
@@ -409,17 +411,30 @@ io.on("connection", (socket) => {
       return;
     }
     const findOnlineRoom = await OnlineRoomModel.findById(roomId);
-    if (!findOnlineRoom) {
+    const findFriendRoom = await FriendRoomModel.findById(roomId);
+    if (!findOnlineRoom && !findFriendRoom) {
       throw new Error("Online room not found!");
     }
-    if (findOnlineRoom.user1 === userId) {
-      io.to(findOnlineRoom.user2SessionId!!).emit("opponent-send-index", {
-        index,
-      });
-    } else if (findOnlineRoom.user2 === userId) {
-      io.to(findOnlineRoom.user1SessionId!!).emit("opponent-send-index", {
-        index,
-      });
+    if (findOnlineRoom) {
+      if (findOnlineRoom.user1 === userId) {
+        io.to(findOnlineRoom.user2SessionId!!).emit("opponent-send-index", {
+          index,
+        });
+      } else if (findOnlineRoom.user2 === userId) {
+        io.to(findOnlineRoom.user1SessionId!!).emit("opponent-send-index", {
+          index,
+        });
+      }
+    } else if (findFriendRoom) {
+      if (findFriendRoom.user1 === userId) {
+        io.to(findFriendRoom.user2SessionId!!).emit("opponent-send-index", {
+          index,
+        });
+      } else if (findFriendRoom.user2 === userId) {
+        io.to(findFriendRoom.user1SessionId!!).emit("opponent-send-index", {
+          index,
+        });
+      }
     }
   };
   const handleAddFriend = async (data: any) => {
@@ -571,40 +586,238 @@ io.on("connection", (socket) => {
         seconds: existingRoom.seconds,
       };
       socket.emit("quiz-request-sended", userData);
-      // await FriendRoomModel.findByIdAndUpdate(
-      //   roomId,
-      //   {
-      //     user2: existingFriend.id,
-      //     user2SessionId: existingFriend.sessionId,
-      //     isUser2Alive: true,
-      //   },
-      //   { new: true }
-      // );
     } catch (error) {
       console.log(error);
       socket.emit("request-server-error", { message: "Something went wrong" });
+    }
+  };
+  const handleCancelQuizRequest = async (data: any) => {
+    const { roomId, friendId } = data;
+    if (!roomId || !friendId) {
+      socket.emit("cancel-quiz-error", {
+        message: "Payload data is not correct!",
+      });
+      return;
+    }
+    const room = await FriendRoomModel.findOne({
+      _id: roomId,
+      status: {
+        $ne: "ended",
+      },
+    });
+    if (!room) {
+      socket.emit("cancel-quiz-error", {
+        message: "Online room is not found or it's ended!",
+      });
+      return;
+    }
+    const friend = await UserModel.findById(friendId);
+    if (!friend) {
+      socket.emit("cancel-quiz-error", {
+        message: "Friend is not found!",
+      });
+      return;
+    }
+    const friendSessionId = friend.sessionId;
+    socket.emit("cancel-quiz-completed");
+    io.to(friendSessionId as string).emit("cancel-quiz-completed");
+  };
+  const handleAcceptRequest = async (data: any) => {
+    const { roomId, friendId, userId } = data;
+    if (!roomId || !friendId || !userId) {
+      socket.emit("quiz-accepted-error", {
+        message: "Payload is not correct!",
+      });
+      return;
+    }
+    const friend = await UserModel.findById(friendId);
+    if (!friend) {
+      socket.emit("quiz-accepted-error", { message: "Friend is not found!" });
+      return;
+    }
+    const user = await UserModel.findById(userId);
+    if (!user) {
+      socket.emit("quiz-accepted-error", { message: "User is not found!" });
+      return;
+    }
+
+    const room = await FriendRoomModel.findOne({
+      _id: roomId,
+      status: {
+        $ne: "ended",
+      },
+    });
+    if (!room) {
+      socket.emit("quiz-accepted-error", { message: "Room is not found!" });
+      return;
+    }
+    const updatedRoom = await FriendRoomModel.findByIdAndUpdate(roomId, {
+      status: "playing",
+      user2: user.id,
+      isUser2Alive: true,
+      user2SessionId: user.sessionId,
+    });
+    socket.emit("request-accept-room-redirect", { roomId: updatedRoom?.id });
+    io.to(friend.sessionId as string).emit("request-accept-room-redirect", {
+      roomId: updatedRoom?.id,
+    });
+  };
+  const submitFriendRoom = async (data: any) => {
+    const { roomId, userId, selectedStates, mcqs, completeTime } = data;
+    if (roomId && userId && selectedStates && mcqs && completeTime) {
+      const newFriendHistory = await FriendHistoryModel.create({
+        roomId,
+        mcqs,
+        user: userId,
+        roomType: "friend-room",
+        quizIdAndValue: selectedStates,
+        time: completeTime,
+      });
+      const findFriendRoom = await FriendRoomModel.findById(roomId);
+      if (findFriendRoom?.resignation) {
+        if (findFriendRoom.user1 === userId) {
+          io.to(findFriendRoom.user2SessionId!!).emit("opponent-resign", {
+            isCompleted: true,
+            time: completeTime,
+          });
+        } else if (findFriendRoom.user2 === userId) {
+          io.to(findFriendRoom.user1SessionId!!).emit("opponent-resign", {
+            isCompleted: true,
+            time: completeTime,
+          });
+        }
+        return;
+      } else {
+        if (findFriendRoom?.user1 === userId) {
+          await FriendRoomModel.findOneAndUpdate(
+            { _id: roomId },
+            { isUser1Alive: false }
+          );
+          io.to(findFriendRoom?.user2SessionId!!).emit("opponent-completed", {
+            isCompleted: true,
+            time: completeTime,
+          });
+          socket.emit("complete-response", { _id: newFriendHistory._id });
+        } else if (findFriendRoom?.user2 === userId) {
+          await FriendRoomModel.findOneAndUpdate(
+            { _id: roomId },
+            { isUser2Alive: false }
+          );
+          io.to(findFriendRoom?.user1SessionId!!).emit("opponent-completed", {
+            isCompleted: true,
+            time: completeTime,
+          });
+          socket.emit("complete-response", { _id: newFriendHistory._id });
+        }
+      }
+    } else {
+      socket.emit("submit-error", { error: "payload-not-correct" });
+    }
+  };
+  const leaveByFriendResign = async (data: any) => {
+    const { completeTime, mcqs, roomId, selectedStates, userId } = data;
+    if (completeTime || mcqs || roomId || selectedStates || userId) {
+      // Finding and Validating and Updating Online Room Logic
+      const getFriendRoom = await FriendRoomModel.findOne({
+        _id: roomId,
+        status: "playing",
+      });
+      if (!getFriendRoom) {
+        // TODO:Handling Error
+      }
+      if (getFriendRoom?.user1 === userId || getFriendRoom?.user2 === userId) {
+        await FriendRoomModel.findOneAndUpdate(
+          {
+            _id: roomId,
+            status: "playing",
+          },
+          {
+            isUser1Alive: false,
+            isUser2Alive: false,
+            resignation: userId,
+            status: "ended",
+          },
+          { new: true }
+        );
+        // Creating online history object and checking resignation and sending opponent an socket event
+        await FriendHistoryModel.create({
+          roomId,
+          mcqs,
+          user: userId,
+          roomType: "friend-room",
+          quizIdAndValue: selectedStates,
+          time: completeTime,
+        });
+        const findOnlineRoom = await FriendRoomModel.findById(roomId);
+        if (findOnlineRoom?.resignation) {
+          if (findOnlineRoom?.user1 === userId) {
+            console.log("Sending Resign Event");
+            io.to(findOnlineRoom?.user2SessionId!!).emit("opponent-resign", {
+              isCompleted: true,
+              time: completeTime,
+            });
+          } else if (findOnlineRoom?.user2 === userId) {
+            console.log("Sending Resign Event");
+            io.to(findOnlineRoom?.user1SessionId!!).emit("opponent-resign", {
+              isCompleted: true,
+              time: completeTime,
+            });
+          }
+        }
+      } else {
+        // TODO:Handling Error
+      }
+    } else {
+      console.log("Resign payload is not correct");
+      // TODO:Handling Error
+    }
+  };
+  const friendResignSubmit = async (data: any) => {
+    const { roomId, userId, selectedStates, mcqs, completeTime } = data;
+    if (roomId && userId && selectedStates && mcqs && completeTime) {
+      const newFriendHistory = await FriendHistoryModel.create({
+        roomId,
+        mcqs,
+        user: userId,
+        roomType: "friend-room",
+        quizIdAndValue: selectedStates,
+        time: completeTime,
+      });
+      socket.emit("complete-resign-response", { _id: newFriendHistory._id });
+    } else {
+      console.log("This payload is not correct");
     }
   };
 
   socket.on("create-online-room", createRoom);
   socket.on("online-submit", submitOnlineRoom);
   socket.on("online-resign-submit", onlineResignSubmit);
-  socket.on("online-resign-by-leave", leaveByResign);
+  socket.on("online-resign-by-leave", leaveByOnlineResign);
   socket.on("get-online-history", getOnlineHistory);
   socket.on("opponent-quiz-index", handleOpponentIndex);
   socket.on("add-friend", handleAddFriend);
   socket.on("add-friend", handleAddFriend);
   socket.on("send-quiz-request", handleSendQuizRequest);
+  socket.on("cancel-quiz-request", handleCancelQuizRequest);
+  socket.on("quiz-request-accepted", handleAcceptRequest);
+  socket.on("friend-submit", submitFriendRoom);
+  socket.on("friend-resign-by-leave", leaveByFriendResign);
+  socket.on("friend-resign-submit", friendResignSubmit);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
     socket.off("online-submit", submitOnlineRoom);
     socket.off("online-resign-submit", onlineResignSubmit);
-    socket.off("online-resign-by-leave", leaveByResign);
+    socket.off("online-resign-by-leave", leaveByOnlineResign);
     socket.off("get-online-history", getOnlineHistory);
     socket.off("opponent-quiz-index", handleOpponentIndex);
     socket.off("add-friend", handleAddFriend);
     socket.off("send-quiz-request", handleSendQuizRequest);
+    socket.off("cancel-quiz-request", handleCancelQuizRequest);
+    socket.off("quiz-request-accepted", handleAcceptRequest);
+    socket.off("friend-submit", submitFriendRoom);
+    socket.off("friend-resign-by-leave", leaveByFriendResign);
+    socket.off("friend-resign-submit", friendResignSubmit);
   });
 });
 

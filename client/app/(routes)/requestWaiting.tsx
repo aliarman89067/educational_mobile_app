@@ -1,10 +1,11 @@
-import { Image, StyleSheet, Text, View } from "react-native";
-import React from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useEffect } from "react";
 import { router, useLocalSearchParams } from "expo-router";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import FindingTimer from "@/components/findingTimer";
 import axios from "axios";
+import { useSocket } from "@/context/SocketContext";
 
 const RequestWaiting = () => {
   const {
@@ -19,6 +20,20 @@ const RequestWaiting = () => {
     length,
     seconds,
   } = useLocalSearchParams();
+
+  const { socketIo } = useSocket();
+
+  useEffect(() => {
+    const handleCancelCompleted = () => {
+      router.replace({ pathname: "/makeQuiz", params: { type: "friend" } });
+    };
+
+    socketIo.on("cancel-quiz-completed", handleCancelCompleted);
+    return () => {
+      socketIo.off("cancel-quiz-completed", handleCancelCompleted);
+    };
+  }, []);
+
   const handleDisabledRoom = async () => {
     try {
       await axios.put("/quiz/disabled-friend-room", {
@@ -30,6 +45,14 @@ const RequestWaiting = () => {
       router.back();
     }
   };
+
+  const handleCancelRequest = () => {
+    socketIo.emit("cancel-quiz-request", {
+      roomId: roomId,
+      friendId: friendId,
+    });
+  };
+
   return (
     <View style={styles.container}>
       <Image
@@ -41,6 +64,13 @@ const RequestWaiting = () => {
       <View style={styles.timerContainer}>
         <FindingTimer time={15} isStart={true} fn={handleDisabledRoom} />
       </View>
+      <TouchableOpacity
+        onPress={handleCancelRequest}
+        activeOpacity={0.7}
+        style={styles.cancelButton}
+      >
+        <Text style={styles.cancelText}>Cancel</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -69,5 +99,16 @@ const styles = StyleSheet.create({
   },
   timerContainer: {
     marginTop: 50,
+  },
+  cancelButton: {
+    paddingHorizontal: 25,
+    paddingVertical: 10,
+    borderRadius: 6,
+    backgroundColor: "#e5383b",
+  },
+  cancelText: {
+    color: "white",
+    fontFamily: fontFamily.Regular,
+    fontSize: 15,
   },
 });

@@ -16,7 +16,6 @@ import { fontFamily } from "@/constants/fonts";
 import { colors } from "@/constants/colors";
 import { notFound } from "@/constants/images";
 import { useSocket } from "@/context/SocketContext";
-import { useSocketStore } from "@/context/zustandStore";
 
 const SelectFriend = () => {
   const { roomId } = useLocalSearchParams();
@@ -27,7 +26,6 @@ const SelectFriend = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const { socketIo } = useSocket();
-  const { sessionId } = useSocketStore();
 
   useEffect(() => {
     const loadFriendAndUser = async () => {

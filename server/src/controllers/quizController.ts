@@ -605,3 +605,160 @@ export const createFriendRoom = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Failed to create friend room" });
   }
 };
+
+export const getFriendRoom = async (req: Request, res: Response) => {
+  const { friendRoomId, userId, sessionId } = req.params as {
+    friendRoomId: string;
+    userId: string;
+    sessionId: string;
+  };
+  try {
+    if (!friendRoomId || !userId || !sessionId) {
+      console.log("Payload is not correct");
+      res.status(404).json({
+        success: false,
+        message: "Params payload is not correct",
+      });
+      return;
+    }
+    const isOnlineRoomAlive = await FriendRoomModel.findOne({
+      _id: friendRoomId,
+    }).select("isUser1Alive isUser2Alive user1 user2");
+    if (
+      (!isOnlineRoomAlive?.isUser1Alive && !isOnlineRoomAlive?.isUser2Alive) ||
+      !isOnlineRoomAlive
+    ) {
+      console.log("This room is expired");
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This Online Room is not valid. Its expired!",
+      });
+      return;
+    }
+    if (isOnlineRoomAlive.user1 === userId && !isOnlineRoomAlive.isUser1Alive) {
+      console.log("Room Expired for user 1");
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This room is expired for user 1",
+      });
+      return;
+    } else if (
+      isOnlineRoomAlive.user2 === userId &&
+      !isOnlineRoomAlive.isUser2Alive
+    ) {
+      console.log("Room Expired for user 2");
+      res.status(200).json({
+        success: false,
+        error: "room-expired",
+        message: "This room is expired for user 2",
+      });
+      return;
+    }
+    if (
+      isOnlineRoomAlive.user1 !== userId &&
+      isOnlineRoomAlive.user2 !== userId
+    ) {
+      console.log("User id is not matching any of the online room user id's");
+      res.status(200).json({
+        success: false,
+        error: "server-error",
+        message: "User id is not matching any of the online room user id's",
+      });
+      return;
+    }
+    const friendRoomData = await FriendRoomModel.findOne({
+      _id: friendRoomId,
+    })
+      .populate({ path: "subjectId", select: "_id subject" })
+      .populate({ path: "yearId", select: "_id year" })
+      .populate({ path: "topicId", select: "_id topic" })
+      .populate({ path: "quizes" });
+
+    // Finding opponent
+    // Validating that both user exist in online room
+    if (!friendRoomData?.user1 || !friendRoomData.user2) {
+      console.log(
+        "One user is missing in online room means its not completely updated!"
+      );
+      res.status(200).json({
+        success: false,
+        error: "server-error",
+        message:
+          "One user is missing in online room means its not completely updated!",
+      });
+      return;
+    }
+    let opponent;
+    let remainingTime: string | null | undefined = "";
+    const isUser1 = friendRoomData.user1 === userId;
+    const isOpponentGuest = isUser1
+      ? friendRoomData.isGuest2
+      : friendRoomData.isGuest1;
+
+    if (friendRoomData.user1 === userId) {
+      const updatedOnlineRoom = await FriendRoomModel.findOneAndUpdate(
+        {
+          _id: friendRoomId,
+          status: "playing",
+        },
+        {
+          user1SessionId: sessionId,
+        },
+        { new: true }
+      );
+      remainingTime = updatedOnlineRoom?.user1RemainingTime;
+
+      if (isOpponentGuest) {
+        opponent = await GuestModel.findOne({
+          _id: friendRoomData.user2,
+        });
+      } else {
+        opponent = await UserModel.findOne({
+          _id: friendRoomData.user2,
+        });
+      }
+    } else if (friendRoomData.user2 === userId) {
+      const updatedOnlineRoom = await FriendRoomModel.findOneAndUpdate(
+        {
+          _id: friendRoomId,
+          status: "playing",
+        },
+        {
+          user2SessionId: sessionId,
+        },
+        { new: true }
+      );
+      remainingTime = updatedOnlineRoom?.user2RemainingTime;
+      if (isOpponentGuest) {
+        opponent = await GuestModel.findOne({
+          _id: friendRoomData.user1,
+        });
+      } else {
+        opponent = await UserModel.findOne({
+          _id: friendRoomData.user1,
+        });
+      }
+    }
+    if (!opponent) {
+      console.log("Can't find your opponent");
+      res.status(200).json({
+        success: false,
+        error: "opponent-left",
+        message: "Can't find your opponent",
+      });
+      return;
+    }
+    res.status(200).json({
+      success: true,
+      data: { friendRoomData, opponent, remainingTime },
+    });
+  } catch (error: any) {
+    console.log(error);
+    console.log("Failed to get online room");
+    res
+      .status(500)
+      .json({ message: `Failed to get online room ${error.message ?? error}` });
+  }
+};

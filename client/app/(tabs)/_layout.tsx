@@ -107,6 +107,7 @@ const TabsLayout = () => {
         ToastAndroid.CENTER
       );
     };
+
     socketIo.on("friend-added", handleFriendAdded);
     socketIo.on("friend-payload-error", handlePayloadError);
     socketIo.on("request-received", handleRequestReceived);

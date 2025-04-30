@@ -1,14 +1,19 @@
 import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import React, { useEffect, useState } from "react";
-import LottieView from "lottie-react-native";
-import bellAnimation from "@/assets/animations/bell.json";
 import { fontFamily } from "@/constants/fonts";
 import { colors } from "@/constants/colors";
 import { useRequestQuizReceivedStore } from "@/context/zustandStore";
 import axios from "axios";
+import { useSocket } from "@/context/SocketContext";
+import asyncStorage from "@react-native-async-storage/async-storage";
+import { User_Type } from "@/utils/type";
+import { router } from "expo-router";
 
 const QuizRequestNotificantion = () => {
   const { data, removeData } = useRequestQuizReceivedStore();
+  const [userData, setUserData] = useState<User_Type | null>(null);
+
+  const { socketIo } = useSocket();
 
   const [time, setTime] = useState(14);
   const getSeconds = () => {
@@ -22,11 +27,41 @@ const QuizRequestNotificantion = () => {
   let intervalId: any;
   useEffect(() => {
     // removeData();
+    const loadData = async () => {
+      const userDataString = await asyncStorage.getItem("current-user");
+      if (!userDataString) {
+        router.replace("/(auth)");
+        return;
+      }
+      setUserData(JSON.parse(userDataString));
+    };
+    loadData();
     intervalId = setInterval(async () => {
       setTime((prev) => prev - 1);
     }, 1000);
+
+    // Socket Event
+
+    const handleCancelCompleted = () => {
+      console.log("Quiz Cancel Successfull");
+      removeData();
+    };
+
+    const handleAcceptedRedirect = (data: any) => {
+      removeData();
+      router.push({
+        pathname: "/(routes)/FriendRoom",
+        params: { roomId: data.roomId },
+      });
+    };
+
+    socketIo.on("cancel-quiz-completed", handleCancelCompleted);
+    socketIo.on("request-accept-room-redirect", handleAcceptedRedirect);
+
     return () => {
       clearInterval(intervalId);
+      socketIo.off("cancel-quiz-completed", handleCancelCompleted);
+      socketIo.off("request-accept-room-redirect", handleAcceptedRedirect);
     };
   }, []);
 
@@ -47,6 +82,26 @@ const QuizRequestNotificantion = () => {
       handleDisabledRoom();
     }
   }, [time]);
+
+  const handleCancelRequest = () => {
+    if (!data) return;
+    socketIo.emit("cancel-quiz-request", {
+      roomId: data.roomId,
+      friendId: data.friendId,
+    });
+  };
+
+  const handleAcceptRequest = () => {
+    if (!data || !userData) return;
+
+    const payloadData = {
+      roomId: data.roomId,
+      friendId: data.friendId,
+      userId: userData.id,
+    };
+
+    socketIo.emit("quiz-request-accepted", payloadData);
+  };
 
   return (
     <>
@@ -216,6 +271,7 @@ const QuizRequestNotificantion = () => {
               }}
             >
               <TouchableOpacity
+                onPress={handleAcceptRequest}
                 activeOpacity={0.7}
                 style={{
                   flex: 1,
@@ -237,6 +293,7 @@ const QuizRequestNotificantion = () => {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
+                onPress={handleCancelRequest}
                 activeOpacity={0.7}
                 style={{
                   flex: 1,
