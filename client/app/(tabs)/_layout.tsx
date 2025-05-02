@@ -182,6 +182,20 @@ const TabsLayout = () => {
             ),
           }}
         />
+        <Tabs.Screen
+          key={4}
+          name="papers"
+          options={{
+            tabBarLabel: "Papers",
+            tabBarIcon: ({ focused }) => (
+              <TabBarIcon
+                focused={focused}
+                label="Papers"
+                icon={friendsImage}
+              />
+            ),
+          }}
+        />
       </Tabs>
     </View>
   );

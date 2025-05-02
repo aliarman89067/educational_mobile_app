@@ -73,6 +73,7 @@ const AuthPage = () => {
         router.replace("/(tabs)");
       }
     } catch (error) {
+      console.log(error);
       if (isErrorWithCode(error)) {
         switch (error.code) {
           case statusCodes.IN_PROGRESS:

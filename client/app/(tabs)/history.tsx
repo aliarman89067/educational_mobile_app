@@ -56,6 +56,22 @@ type DataType = {
     resignation: string;
     mcqLength: number;
   }[];
+  friendQuizes: {
+    roomId: string;
+    historyId: string;
+    subjectId: string;
+    subjectName: string;
+    topicId?: string;
+    topicName?: string;
+    yearId?: string;
+    yearName?: string;
+    date: string;
+    quizType: "Topical" | "Yearly";
+    quizIdAndValue: QuizIdAndValueType[];
+    opponentQuizIdAndValue: QuizIdAndValueType[];
+    resignation: string;
+    mcqLength: number;
+  }[];
 };
 
 const History = () => {
@@ -88,6 +104,8 @@ const History = () => {
     loadHistory();
   }, [router, pathname]);
 
+  console.log(data?.friendQuizes);
+
   return (
     <SafeAreaView style={{ flex: 1 }}>
       {isLoading ? (
@@ -108,6 +126,9 @@ const History = () => {
             )}
             {data && data.onlineQuizes.length > 0 && (
               <OnlineQuizesContainer data={data.onlineQuizes} />
+            )}
+            {data && data.friendQuizes.length > 0 && (
+              <FriendQuizesContainer data={data.friendQuizes} />
             )}
           </View>
         </ScrollView>
@@ -243,6 +264,36 @@ const OnlineQuizesContainer = ({
       >
         <Text style={styles.quizTypeHeadingText}>
           {data.length} Online Quizes History
+        </Text>
+        <Entypo name="chevron-small-down" size={22} color={colors.grayDark} />
+      </TouchableOpacity>
+      {isShow && (
+        <View style={styles.quizesRowContainer}>
+          {data.map((quiz) => (
+            <OnlineHistoryRow key={quiz.roomId} data={quiz} />
+          ))}
+        </View>
+      )}
+    </View>
+  );
+};
+
+const FriendQuizesContainer = ({
+  data,
+}: {
+  data: DataType["friendQuizes"];
+}) => {
+  const [isShow, setIsShow] = useState(false);
+
+  return (
+    <View style={styles.quizContainer}>
+      <TouchableOpacity
+        onPress={() => setIsShow(!isShow)}
+        activeOpacity={0.7}
+        style={styles.quizTypeHeadingContainer}
+      >
+        <Text style={styles.quizTypeHeadingText}>
+          {data.length} Friend Quizes History
         </Text>
         <Entypo name="chevron-small-down" size={22} color={colors.grayDark} />
       </TouchableOpacity>

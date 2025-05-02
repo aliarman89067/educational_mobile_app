@@ -101,8 +101,8 @@ const OnlineHistoryRow = ({ data }: Data) => {
       key={data.roomId}
       onPress={() =>
         router.push({
-          pathname: "/(routes)/onlineResult",
-          params: { onlineResultId: data.historyId, onlineRoomId: data.roomId },
+          pathname: "/(routes)/friendResult",
+          params: { friendResultId: data.historyId, roomId: data.roomId },
         })
       }
       activeOpacity={0.7}

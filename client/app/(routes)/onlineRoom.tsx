@@ -353,7 +353,6 @@ const OnlineRoom = () => {
   };
 
   const handleSubmit = () => {
-    console.log("handle Submit Runs");
     let timeoutId1: any;
     try {
       // Time Taken Calculation

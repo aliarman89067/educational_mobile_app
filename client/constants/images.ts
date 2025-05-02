@@ -34,6 +34,10 @@ import userGuest from "@/assets/images/icons/user-guest.png";
 import chevronDown from "@/assets/images/icons/chevron-down.png";
 import search from "@/assets/images/icons/search.png";
 import notFound from "@/assets/images/notFound.png";
+import pencil from "@/assets/images/icons/pencil.png";
+import brush from "@/assets/images/icons/brush.png";
+import undo from "@/assets/images/icons/undo.png";
+import redo from "@/assets/images/icons/redo.png";
 
 export {
   homeImage,
@@ -72,4 +76,8 @@ export {
   chevronDown,
   search,
   notFound,
+  pencil,
+  brush,
+  undo,
+  redo,
 };
