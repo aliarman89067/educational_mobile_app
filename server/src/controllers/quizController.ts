@@ -9,6 +9,7 @@ import UserModel from "../models/User";
 import OnlineHistoryModel from "../models/OnlineHistory";
 import GuestModel from "../models/Guest";
 import FriendRoomModel from "../models/FriendRoom";
+import FriendHistoryModel from "../models/FriendHistory";
 
 export const getQuizByCategory = async (req: Request, res: Response) => {
   try {
@@ -760,5 +761,122 @@ export const getFriendRoom = async (req: Request, res: Response) => {
     res
       .status(500)
       .json({ message: `Failed to get online room ${error.message ?? error}` });
+  }
+};
+
+export const getFriendResult = async (req: Request, res: Response) => {
+  const { resultId, roomId } = req.params;
+  try {
+    if (!resultId || !roomId) {
+      res.status(404).json({
+        success: false,
+        message: "Result Id or Room Id is not exist!",
+      });
+      return;
+    }
+    const findOpponentHistory = await FriendHistoryModel.findOne({
+      roomId,
+      _id: { $ne: resultId },
+    })
+      .populate({ path: "mcqs" })
+      .populate({
+        path: "roomId",
+        select: "_id subjectId yearId topicId quizType",
+        populate: {
+          path: "subjectId yearId topicId",
+          select: "subject year topic",
+        },
+      });
+    const myHistory = await FriendHistoryModel.findOne({
+      roomId,
+      _id: resultId,
+    })
+      .populate({ path: "mcqs" })
+      .populate({
+        path: "roomId",
+        select: "_id subjectId yearId topicId quizType",
+        populate: {
+          path: "subjectId yearId topicId",
+          select: "subject year topic",
+        },
+      });
+
+    const findFriendRoom = await FriendRoomModel.findOneAndUpdate(
+      {
+        _id: roomId,
+      },
+      {
+        status: "ended",
+      },
+      {
+        new: true,
+      }
+    );
+    if (findFriendRoom?.user1 === myHistory?.user) {
+      await FriendRoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+        },
+        {
+          quizIdAndValue1: myHistory?.quizIdAndValue,
+          quizIdAndValue2: findOpponentHistory?.quizIdAndValue,
+        }
+      );
+    } else {
+      await FriendRoomModel.findOneAndUpdate(
+        {
+          _id: roomId,
+        },
+        {
+          quizIdAndValue2: myHistory?.quizIdAndValue,
+          quizIdAndValue1: findOpponentHistory?.quizIdAndValue,
+        }
+      );
+    }
+    if (!findFriendRoom) {
+      res.status(400).json({ success: false, message: "Room is expired!" });
+      return;
+    }
+
+    let opponentUser;
+    if (findFriendRoom.user1 === myHistory?.user) {
+      opponentUser = await UserModel.findOne({
+        clerkId: findFriendRoom.user2,
+      }).select("fullName imageUrl clerkId");
+    } else {
+      opponentUser = await UserModel.findOne({
+        clerkId: findFriendRoom.user1,
+      }).select("fullName imageUrl clerkId");
+    }
+
+    if (findOpponentHistory) {
+      const resignation = findFriendRoom.resignation ?? "";
+      res.status(200).json({
+        success: true,
+        isPending: false,
+        data: {
+          myHistory,
+          opponentUser,
+          opponentHistory: findOpponentHistory,
+          resignation,
+        },
+      });
+    } else {
+      res.status(200).json({
+        success: true,
+        isPending: true,
+        data: {
+          myData: myHistory,
+          opponentUser,
+          time: {
+            fullTime: findFriendRoom.seconds,
+            timeTaken: myHistory?.time,
+          },
+        },
+      });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, message: "Something went wrong" });
   }
 };

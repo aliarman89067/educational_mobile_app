@@ -788,6 +788,44 @@ io.on("connection", (socket) => {
       console.log("This payload is not correct");
     }
   };
+  const getFriendHistory = async (data: any) => {
+    let timeoutId;
+    const { resultId, roomId } = data;
+    if (resultId && roomId) {
+      const getOpponentHistory = async () => {
+        const findOpponentHistory = await FriendHistoryModel.findOne({
+          roomId,
+          _id: { $ne: resultId },
+        })
+          .populate({ path: "mcqs" })
+          .populate({
+            path: "roomId",
+            select: "_id subjectId yearId topicId quizType",
+            populate: {
+              path: "subjectId yearId topicId",
+              select: "subject year topic",
+            },
+          });
+        if (findOpponentHistory) {
+          return findOpponentHistory;
+        } else {
+          return new Promise((resolve) => {
+            timeoutId = setTimeout(() => resolve(getOpponentHistory()), 1000);
+          });
+        }
+      };
+      clearTimeout(timeoutId);
+      const getOnlineHistoryRes = await getOpponentHistory();
+
+      if (getOnlineHistoryRes) {
+        socket.emit("get-friend-history-data", getOnlineHistoryRes);
+      } else {
+        socket.emit("get-friend-history-error", { error: "not-found" });
+      }
+    } else {
+      socket.emit("get-friend-history-error", { error: "payload-error" });
+    }
+  };
 
   socket.on("create-online-room", createRoom);
   socket.on("online-submit", submitOnlineRoom);
@@ -803,6 +841,7 @@ io.on("connection", (socket) => {
   socket.on("friend-submit", submitFriendRoom);
   socket.on("friend-resign-by-leave", leaveByFriendResign);
   socket.on("friend-resign-submit", friendResignSubmit);
+  socket.on("get-friend-history", getFriendHistory);
 
   socket.on("disconnect", async () => {
     socket.off("create-online-room", createRoom);
@@ -818,6 +857,7 @@ io.on("connection", (socket) => {
     socket.off("friend-submit", submitFriendRoom);
     socket.off("friend-resign-by-leave", leaveByFriendResign);
     socket.off("friend-resign-submit", friendResignSubmit);
+    socket.off("get-friend-history", getFriendHistory);
   });
 });
 

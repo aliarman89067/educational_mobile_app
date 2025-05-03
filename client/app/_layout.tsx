@@ -28,6 +28,8 @@ const Layout = () => {
         "791454953921-46gv6gs1f5shlec7elrmiecb0gv47vpn.apps.googleusercontent.com",
       webClientId:
         "791454953921-mqv697l3v5ccgd3p1e5156mdp6jspcle.apps.googleusercontent.com",
+      offlineAccess: true,
+      forceCodeForRefreshToken: true,
     });
   }, []);
 
