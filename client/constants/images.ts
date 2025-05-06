@@ -38,6 +38,9 @@ import pencil from "@/assets/images/icons/pencil.png";
 import brush from "@/assets/images/icons/brush.png";
 import undo from "@/assets/images/icons/undo.png";
 import redo from "@/assets/images/icons/redo.png";
+import calculator from "@/assets/images/icons/calculator.png";
+import remove from "@/assets/images/icons/remove.png";
+import divide from "@/assets/images/icons/divide.png";
 
 export {
   homeImage,
@@ -80,4 +83,7 @@ export {
   brush,
   undo,
   redo,
+  calculator,
+  remove,
+  divide,
 };

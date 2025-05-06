@@ -15,6 +15,7 @@ import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import {
   brush,
+  calculator,
   chevronDown,
   close,
   pencil,
@@ -23,6 +24,7 @@ import {
 } from "@/constants/images";
 import { SketchCanvas } from "@sourcetoad/react-native-sketch-canvas";
 import ViewShot, { captureRef } from "react-native-view-shot";
+import { MiniCalculator } from "./MiniCalculator";
 
 interface TextQuestionProps {
   changeScroll: (value: boolean) => void;
@@ -67,6 +69,7 @@ const TextQuestion = ({
   const [redoStack, setRedoStack] = useState<any[]>([]);
   const [paths, setPaths] = useState<any[]>([]);
   const [imagePath, setImagePath] = useState("");
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   const RNSketchRef = useRef<SketchCanvas>(null);
   const viewShotRef = useRef(null);
@@ -86,12 +89,12 @@ const TextQuestion = ({
 
   const captureScreen = async () => {
     try {
+      if (paths.length === 0 || !paths) return;
       const uri = await captureRef(viewShotRef, {
         format: "jpg",
         quality: 0.8,
       });
       setImagePath(uri);
-      console.log(uri);
     } catch (error) {
       console.log(error);
     }
@@ -177,6 +180,11 @@ const TextQuestion = ({
           ],
         }}
       >
+        {/* Calculator */}
+        <MiniCalculator
+          isOpen={isCalculatorOpen}
+          setIsOpen={setIsCalculatorOpen}
+        />
         {/* Header */}
         <View style={{ gap: 20, paddingHorizontal: 20, paddingVertical: 10 }}>
           <TouchableOpacity onPress={handleRWAnimeClose} activeOpacity={0.7}>
@@ -189,38 +197,41 @@ const TextQuestion = ({
             />
           </TouchableOpacity>
           {/* Question */}
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <Text
-              style={{
-                fontFamily: fontFamily.Bold,
-                color: colors.grayDark,
-                fontSize: 18,
-              }}
-            >
-              1
-            </Text>
-            <View style={{ gap: 10 }}>
+          {questionPart1 && (
+            <View style={{ flexDirection: "row", gap: 10 }}>
               <Text
                 style={{
-                  fontFamily: fontFamily.Medium,
-                  color: colors.grayLight,
-                  fontSize: 15,
+                  fontFamily: fontFamily.Bold,
+                  color: colors.grayDark,
+                  fontSize: 18,
                 }}
               >
-                Jacob is 10 years 8 months old. Amy is 15 months younger than
-                Jacob.
+                1
               </Text>
-              <Text
-                style={{
-                  fontFamily: fontFamily.Medium,
-                  color: colors.grayLight,
-                  fontSize: 15,
-                }}
-              >
-                Find how old Amy is.
-              </Text>
+              <View style={{ gap: 10 }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.Medium,
+                    color: colors.grayLight,
+                    fontSize: 15,
+                  }}
+                >
+                  {questionPart1}
+                </Text>
+                {questionPart2 && (
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.Medium,
+                      color: colors.grayLight,
+                      fontSize: 15,
+                    }}
+                  >
+                    {questionPart2}
+                  </Text>
+                )}
+              </View>
             </View>
-          </View>
+          )}
           {/* Tools */}
           <View
             style={{
@@ -365,6 +376,27 @@ const TextQuestion = ({
             <View
               style={{ flexDirection: "row", alignContent: "center", gap: 15 }}
             >
+              <TouchableOpacity
+                onPress={() => setIsCalculatorOpen(true)}
+                activeOpacity={0.7}
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 5,
+                  borderStyle: "solid",
+                  borderColor: colors.grayLight,
+                  borderWidth: 1,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Image
+                  source={calculator}
+                  alt="Calculator"
+                  resizeMode="contain"
+                  style={{ width: 30, height: 30 }}
+                />
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={handleUndo}
                 activeOpacity={0.7}
