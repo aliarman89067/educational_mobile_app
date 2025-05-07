@@ -4,13 +4,23 @@ import {
   DimensionValue,
   Easing,
   Image,
+  ScrollView,
+  StyleProp,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  ViewStyle,
 } from "react-native";
-import React, { useRef, useState } from "react";
+import React, {
+  Dispatch,
+  RefObject,
+  SetStateAction,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { colors } from "@/constants/colors";
 import { fontFamily } from "@/constants/fonts";
 import {
@@ -29,6 +39,7 @@ import { MiniCalculator } from "./MiniCalculator";
 interface TextQuestionProps {
   changeScroll: (value: boolean) => void;
   scrollY: number;
+  questionNumber: number;
   questionPart1?: string;
   questionPart2?: string;
   questionPart3?: string;
@@ -42,11 +53,37 @@ interface TextQuestionProps {
   isOption2?: boolean;
   option2Width?: DimensionValue;
   option2Label?: string;
+  correctAns1: any;
+  correctAns2?: any;
+  setStates: Dispatch<
+    SetStateAction<
+      | null
+      | {
+          id: number;
+          input1: string;
+          input2: string | undefined;
+          correct1: string;
+          correct2: string | undefined;
+        }[]
+    >
+  >;
+  questionError: null | {
+    id: number;
+    message: string;
+  };
+  setQuestionError: Dispatch<
+    SetStateAction<null | {
+      id: number;
+      message: string;
+    }>
+  >;
+  viewRef: RefObject<ScrollView>;
 }
 
 const TextQuestion = ({
   changeScroll,
   scrollY,
+  questionNumber,
   questionPart1,
   questionPart2,
   questionPart3,
@@ -60,6 +97,12 @@ const TextQuestion = ({
   isOption2,
   option2Width,
   option2Label,
+  correctAns1,
+  correctAns2,
+  setStates,
+  questionError,
+  setQuestionError,
+  viewRef,
 }: TextQuestionProps) => {
   const RWanime = useRef(new Animated.Value(0)).current;
   const [isColorOpen, setIsColorOpen] = useState(false);
@@ -70,6 +113,16 @@ const TextQuestion = ({
   const [paths, setPaths] = useState<any[]>([]);
   const [imagePath, setImagePath] = useState("");
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [answerValue1, setAnswerValue1] = useState("");
+  const [answerValue2, setAnswerValue2] = useState("");
+  const [result1, setResult1] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
+  const [result2, setResult2] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   const RNSketchRef = useRef<SketchCanvas>(null);
   const viewShotRef = useRef(null);
@@ -157,6 +210,154 @@ const TextQuestion = ({
     RNSketchRef.current?.addPath(pathToRedo);
   };
   const { width, height } = Dimensions.get("window");
+
+  const handleSubmit = () => {
+    let isAnswer1IsCorrect = false;
+    setQuestionError(null);
+    if (answerValue1) {
+      const isNumber = Number(correctAns1);
+      if (isNumber) {
+        const isFloat = Number(correctAns1) % 1 !== 0;
+        if (isFloat) {
+          const correctAnsInNumber = Number(correctAns1);
+          const correctInputInNumber = Number(answerValue1);
+          isAnswer1IsCorrect =
+            Math.trunc(correctAnsInNumber) == Math.trunc(correctInputInNumber);
+        } else {
+          isAnswer1IsCorrect = correctAns1 == answerValue1;
+        }
+      } else {
+        isAnswer1IsCorrect = correctAns1 == answerValue1;
+      }
+    }
+    if (correctAns1 && !correctAns2) {
+      if (isAnswer1IsCorrect) {
+        setResult1({
+          success: true,
+          message: `Your answer is correct`,
+        });
+      } else {
+        setResult1({
+          success: false,
+          message: `Your answer is wrong \n correct answer is ${correctAns1}`,
+        });
+      }
+    } else if (correctAns1 && correctAns2) {
+      if (!isAnswer1IsCorrect && answerValue2 == correctAns2) {
+        setResult1({
+          success: false,
+          message: `Your answer is wrong \n correct answer is ${correctAns1}`,
+        });
+        setResult2({
+          success: true,
+          message: `Your answer is correct`,
+        });
+      } else if (isAnswer1IsCorrect && answerValue2 != correctAns2) {
+        setResult1({
+          success: true,
+          message: `Your answer is correct`,
+        });
+        setResult2({
+          success: false,
+          message: `Your answer is wrong \n correct answer is ${correctAns2}`,
+        });
+      } else if (!isAnswer1IsCorrect && answerValue2 != correctAns2) {
+        setResult1({
+          success: false,
+          message: `Your answer is wrong \n correct answer is ${correctAns1}`,
+        });
+        setResult2({
+          success: false,
+          message: `Your answer is wrong \n correct answer is ${correctAns2}`,
+        });
+      } else {
+        setResult1({
+          success: true,
+          message: `Your answer is correct`,
+        });
+        setResult2({
+          success: true,
+          message: `Your answer is correct`,
+        });
+      }
+    }
+  };
+
+  const getCheckVisibality = (): ViewStyle => {
+    if (correctAns1 && !correctAns2) {
+      if (answerValue1) {
+        return {
+          opacity: 1,
+          pointerEvents: "auto",
+          userSelect: "auto",
+          backgroundColor: "#74c69d",
+        };
+      } else {
+        return {
+          opacity: 0.5,
+          pointerEvents: "none",
+          userSelect: "none",
+          backgroundColor: "#6c757d",
+        };
+      }
+    } else if (correctAns1 && correctAns2) {
+      if (answerValue1 && answerValue2) {
+        return {
+          opacity: 1,
+          pointerEvents: "auto",
+          userSelect: "auto",
+          backgroundColor: "#74c69d",
+        };
+      } else {
+        return {
+          opacity: 0.5,
+          pointerEvents: "none",
+          userSelect: "none",
+          backgroundColor: "#6c757d",
+        };
+      }
+    }
+    return {
+      opacity: 0.5,
+      pointerEvents: "none",
+      userSelect: "none",
+      backgroundColor: "#6c757d",
+    };
+  };
+
+  const handleChangeText = (value: string, type: "input1" | "input2") => {
+    setQuestionError(null);
+    if (type === "input1") {
+      setAnswerValue1(value);
+      setStates((prevState) =>
+        (prevState || []).map((question) => {
+          if (question.id == questionNumber) {
+            return {
+              ...question,
+              input1: value,
+            };
+          } else {
+            return question;
+          }
+        })
+      );
+    } else if (type === "input2") {
+      setAnswerValue2(value);
+      setStates((prevState) =>
+        (prevState || []).map((question) => {
+          if (question.id == questionNumber) {
+            return {
+              ...question,
+              input2: value,
+            };
+          } else {
+            return question;
+          }
+        })
+      );
+    }
+  };
+
   return (
     <>
       <Animated.View
@@ -168,7 +369,6 @@ const TextQuestion = ({
           left: RWAnimeInter,
           backgroundColor: "white",
           zIndex: 100,
-          // Add these to ensure smooth animation:
           overflow: "hidden",
           transform: [
             {
@@ -206,7 +406,7 @@ const TextQuestion = ({
                   fontSize: 18,
                 }}
               >
-                1
+                {questionNumber}
               </Text>
               <View style={{ gap: 10 }}>
                 <Text
@@ -456,6 +656,12 @@ const TextQuestion = ({
         </ViewShot>
       </Animated.View>
       <View
+        onLayout={(event) => {
+          const { y } = event.nativeEvent.layout;
+          if (questionError && questionNumber === questionError.id) {
+            viewRef.current?.scrollTo({ y, animated: true });
+          }
+        }}
         style={{ flex: 1, width: "100%", height: "100%", position: "relative" }}
       >
         <View
@@ -478,7 +684,7 @@ const TextQuestion = ({
                     fontSize: 18,
                   }}
                 >
-                  1
+                  {questionNumber}
                 </Text>
                 <View style={{ gap: 10 }}>
                   <Text
@@ -547,7 +753,7 @@ const TextQuestion = ({
                   flexDirection: "row",
                   alignItems: "center",
                   marginLeft: "auto",
-                  marginVertical: 35,
+                  marginTop: 40,
                   gap: 7,
                 }}
               >
@@ -558,12 +764,21 @@ const TextQuestion = ({
                       style={{
                         position: "relative",
                         borderStyle: "dashed",
-                        borderColor: colors.grayLight,
+                        borderColor:
+                          result1 === null
+                            ? colors.grayLight
+                            : result1.success
+                            ? "#74c69d"
+                            : "#bc4749",
                         borderWidth: 1,
                         width: option1Width,
                       }}
                     >
                       <TextInput
+                        value={answerValue1}
+                        onChangeText={(value) =>
+                          handleChangeText(value, "input1")
+                        }
                         style={{
                           position: "absolute",
                           left: 0,
@@ -590,12 +805,21 @@ const TextQuestion = ({
                       style={{
                         position: "relative",
                         borderStyle: "dashed",
-                        borderColor: colors.grayLight,
+                        borderColor:
+                          result2 === null
+                            ? colors.grayLight
+                            : result2.success
+                            ? "#74c69d"
+                            : "#bc4749",
                         borderWidth: 1,
                         width: option2Width,
                       }}
                     >
                       <TextInput
+                        value={answerValue2}
+                        onChangeText={(value) =>
+                          handleChangeText(value, "input2")
+                        }
                         style={{
                           position: "absolute",
                           left: 0,
@@ -615,14 +839,105 @@ const TextQuestion = ({
                   </>
                 )}
               </View>
+              <View
+                style={{
+                  marginVertical: 15,
+                }}
+              >
+                <TouchableOpacity
+                  onPress={handleSubmit}
+                  activeOpacity={0.7}
+                  style={{
+                    backgroundColor: getCheckVisibality().backgroundColor,
+                    paddingHorizontal: 25,
+                    paddingVertical: 13,
+                    borderRadius: 8,
+                    marginRight: "auto",
+                    opacity: getCheckVisibality().opacity,
+                    pointerEvents: getCheckVisibality().pointerEvents,
+                    userSelect: getCheckVisibality().userSelect,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.Medium,
+                      color: "white",
+                      fontSize: 12,
+                    }}
+                  >
+                    Check
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              {result1 && !result1.success && (
+                <Text
+                  style={{
+                    marginBottom: 10,
+                    fontFamily: fontFamily.Medium,
+                    fontSize: 14,
+                    color: "#bc4749",
+                  }}
+                >
+                  1) {result1.message}
+                </Text>
+              )}
+              {result1 && result1.success && (
+                <Text
+                  style={{
+                    marginBottom: 10,
+                    fontFamily: fontFamily.Medium,
+                    fontSize: 14,
+                    color: "#74c69d",
+                  }}
+                >
+                  1) {result1.message}
+                </Text>
+              )}
+              {result2 && !result2.success && (
+                <Text
+                  style={{
+                    marginBottom: 10,
+                    fontFamily: fontFamily.Medium,
+                    fontSize: 14,
+                    color: "#bc4749",
+                  }}
+                >
+                  2) {result2.message}
+                </Text>
+              )}
+              {result2 && result2.success && (
+                <Text
+                  style={{
+                    marginBottom: 10,
+                    fontFamily: fontFamily.Medium,
+                    fontSize: 14,
+                    color: "#74c69d",
+                  }}
+                >
+                  2) {result2.message}
+                </Text>
+              )}
             </View>
           </View>
+          {questionError && questionError.id === questionNumber && (
+            <View style={{ marginVertical: 10, paddingHorizontal: 10 }}>
+              <Text
+                style={{
+                  color: "#e5383b",
+                  fontSize: 14,
+                  fontFamily: fontFamily.Medium,
+                }}
+              >
+                * {questionError.message}
+              </Text>
+            </View>
+          )}
         </View>
         <View
           style={{
             width: "100%",
             height: 2,
-            backgroundColor: colors.grayDark,
+            backgroundColor: colors.grayLight,
           }}
         ></View>
       </View>
