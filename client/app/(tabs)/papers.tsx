@@ -9,6 +9,8 @@ import {
 import React, { useEffect, useRef, useState } from "react";
 import TextQuestion from "@/components/past-papers/textQuestion";
 import { fontFamily } from "@/constants/fonts";
+import DiagramQuestion from "@/components/past-papers/diagramQuestion";
+import { diagram } from "@/constants/images";
 
 const Papers = () => {
   const viewRef = useRef<ScrollView>(null);
@@ -249,6 +251,21 @@ const Papers = () => {
             viewRef={viewRef}
           />
         ))}
+        <DiagramQuestion
+          scrollY={scrollY}
+          changeScroll={setIsScrollEnable}
+          diagramSrc={diagram}
+          questionBeforeDiagram=""
+          questionAfterDiagram=""
+          point1="Measure angle x."
+          point2="Write down the mathematical name for this type of angle"
+          isPointOption1
+          pointOption1Width="55%"
+          pointOption1Label="Angle x = "
+          isPointOption2
+          pointOption2Width="60%"
+          pointOption2Label=""
+        />
 
         <TouchableOpacity
           onPress={handleSubmit}

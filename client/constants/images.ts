@@ -41,6 +41,7 @@ import redo from "@/assets/images/icons/redo.png";
 import calculator from "@/assets/images/icons/calculator.png";
 import remove from "@/assets/images/icons/remove.png";
 import divide from "@/assets/images/icons/divide.png";
+import diagram from "@/assets/diagram.jpg";
 
 export {
   homeImage,
@@ -86,4 +87,5 @@ export {
   calculator,
   remove,
   divide,
+  diagram,
 };
