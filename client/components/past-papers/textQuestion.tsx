@@ -55,6 +55,48 @@ interface TextQuestionProps {
   option2Label?: string;
   correctAns1: any;
   correctAns2?: any;
+  doubleSideOption1?: {
+    leftSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+    optionWidth: DimensionValue;
+    correctAns: string;
+    rightSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+  };
+  doubleSideOption2?: {
+    leftSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+    optionWidth: DimensionValue;
+    correctAns: string;
+    rightSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+  };
+  doubleSideOption3?: {
+    leftSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+    optionWidth: DimensionValue;
+    correctAns: string;
+    rightSide: {
+      isUpon: boolean;
+      firstValue: string;
+      secondValue: string;
+    };
+  };
   setStates: Dispatch<
     SetStateAction<
       | null
@@ -103,6 +145,9 @@ const TextQuestion = ({
   questionError,
   setQuestionError,
   viewRef,
+  doubleSideOption1,
+  doubleSideOption2,
+  doubleSideOption3,
 }: TextQuestionProps) => {
   const RWanime = useRef(new Animated.Value(0)).current;
   const [isColorOpen, setIsColorOpen] = useState(false);
@@ -748,6 +793,7 @@ const TextQuestion = ({
                   </Text>
                 )}
               </TouchableOpacity>
+              {/* Normal Option */}
               <View
                 style={{
                   flexDirection: "row",
@@ -837,6 +883,345 @@ const TextQuestion = ({
                       {option2Label}
                     </Text>
                   </>
+                )}
+              </View>
+              {/* Double Option */}
+              <View style={{ gap: 7 }}>
+                {doubleSideOption1 && (
+                  <View
+                    style={{
+                      gap: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {doubleSideOption1.leftSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption1.leftSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption1.leftSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption1.leftSide.firstValue}</Text>
+                      )}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={{
+                          position: "relative",
+                          borderStyle: "dashed",
+                          borderColor: colors.grayLight,
+                          borderWidth: 1,
+                          width: doubleSideOption1.optionWidth,
+                        }}
+                      >
+                        <TextInput
+                          // value={answerValue1}
+                          // onChangeText={(value) =>
+                          //   handleChangeText(value, "input1")
+                          // }
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            bottom: 0,
+                            width: "100%",
+                            fontFamily: fontFamily.Medium,
+                            color: colors.grayLight,
+                            fontSize: 15,
+                          }}
+                        />
+                      </TouchableOpacity>
+                      {doubleSideOption1.rightSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption1.rightSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption1.rightSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption1.rightSide.firstValue}</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                {doubleSideOption2 && (
+                  <View
+                    style={{
+                      gap: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {doubleSideOption2.leftSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption2.leftSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption2.leftSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption2.leftSide.firstValue}</Text>
+                      )}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={{
+                          position: "relative",
+                          borderStyle: "dashed",
+                          borderColor: colors.grayLight,
+                          borderWidth: 1,
+                          width: doubleSideOption2.optionWidth,
+                        }}
+                      >
+                        <TextInput
+                          // value={answerValue1}
+                          // onChangeText={(value) =>
+                          //   handleChangeText(value, "input1")
+                          // }
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            bottom: 0,
+                            width: "100%",
+                            fontFamily: fontFamily.Medium,
+                            color: colors.grayLight,
+                            fontSize: 15,
+                          }}
+                        />
+                      </TouchableOpacity>
+                      {doubleSideOption2.rightSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption2.rightSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption2.rightSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption2.rightSide.firstValue}</Text>
+                      )}
+                    </View>
+                  </View>
+                )}
+                {doubleSideOption3 && (
+                  <View
+                    style={{
+                      gap: 4,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {doubleSideOption3.leftSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption3.leftSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption3.leftSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption3.leftSide.firstValue}</Text>
+                      )}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        style={{
+                          position: "relative",
+                          borderStyle: "dashed",
+                          borderColor: colors.grayLight,
+                          borderWidth: 1,
+                          width: doubleSideOption3.optionWidth,
+                        }}
+                      >
+                        <TextInput
+                          // value={answerValue1}
+                          // onChangeText={(value) =>
+                          //   handleChangeText(value, "input1")
+                          // }
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            bottom: 0,
+                            width: "100%",
+                            fontFamily: fontFamily.Medium,
+                            color: colors.grayLight,
+                            fontSize: 15,
+                          }}
+                        />
+                      </TouchableOpacity>
+                      {doubleSideOption3.rightSide.isUpon ? (
+                        <View
+                          style={{
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption3.rightSide.firstValue}
+                          </Text>
+                          <View
+                            style={{
+                              height: 1,
+                              width: "100%",
+                              backgroundColor: colors.grayLight,
+                            }}
+                          ></View>
+                          <Text
+                            style={{
+                              fontFamily: fontFamily.Medium,
+                              fontSize: 15,
+                              color: colors.grayLight,
+                            }}
+                          >
+                            {doubleSideOption3.rightSide.secondValue}
+                          </Text>
+                        </View>
+                      ) : (
+                        <Text>{doubleSideOption3.rightSide.firstValue}</Text>
+                      )}
+                    </View>
+                  </View>
                 )}
               </View>
               <View

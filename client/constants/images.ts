@@ -42,6 +42,12 @@ import calculator from "@/assets/images/icons/calculator.png";
 import remove from "@/assets/images/icons/remove.png";
 import divide from "@/assets/images/icons/divide.png";
 import diagram from "@/assets/diagram.jpg";
+import diagram2 from "@/assets/diagram2.jpg";
+import diagram3 from "@/assets/diagram3.jpg";
+import diagram4 from "@/assets/diagram4.jpg";
+import diagram5 from "@/assets/diagram5.jpg";
+import diagram6 from "@/assets/diagram6.jpg";
+import diagram7 from "@/assets/diagram7.jpg";
 
 export {
   homeImage,
@@ -88,4 +94,10 @@ export {
   remove,
   divide,
   diagram,
+  diagram2,
+  diagram3,
+  diagram4,
+  diagram5,
+  diagram6,
+  diagram7,
 };

@@ -40,6 +40,10 @@ interface DiagramQuestionProps {
   isPointOption2?: boolean;
   pointOption2Width?: DimensionValue;
   pointOption2Label?: string;
+  option1?: boolean;
+  option1Label?: string;
+  option1Width?: DimensionValue;
+  diagramWidthPercentage?: DimensionValue;
 }
 
 const DiagramQuestion = ({
@@ -56,6 +60,10 @@ const DiagramQuestion = ({
   isPointOption2,
   pointOption2Width,
   pointOption2Label,
+  option1,
+  option1Label,
+  option1Width,
+  diagramWidthPercentage,
 }: DiagramQuestionProps) => {
   const RWanime = useRef(new Animated.Value(0)).current;
   const [isColorOpen, setIsColorOpen] = useState(false);
@@ -484,18 +492,17 @@ const DiagramQuestion = ({
         >
           <View style={{ width: "100%", gap: 20 }}>
             {questionBeforeDiagram && (
-              <Text
-                style={{
-                  fontFamily: fontFamily.Bold,
-                  color: colors.grayDark,
-                  fontSize: 18,
-                }}
-              >
-                {questionBeforeDiagram}
-              </Text>
-            )}
-            {diagramSrc && (
-              <View style={{ gap: 2 }}>
+              <View style={{ flexDirection: "row", gap: 7 }}>
+                <Text
+                  style={{
+                    fontFamily: fontFamily.Bold,
+                    color: colors.grayDark,
+                    fontSize: 18,
+                  }}
+                >
+                  1
+                </Text>
+
                 <Text
                   style={{
                     fontFamily: fontFamily.Medium,
@@ -503,14 +510,29 @@ const DiagramQuestion = ({
                     fontSize: 15,
                   }}
                 >
-                  1
+                  {questionBeforeDiagram}
                 </Text>
+              </View>
+            )}
+            {diagramSrc && (
+              <View style={{ gap: 2 }}>
+                {!questionBeforeDiagram && (
+                  <Text
+                    style={{
+                      fontFamily: fontFamily.Bold,
+                      color: colors.grayDark,
+                      fontSize: 18,
+                    }}
+                  >
+                    1
+                  </Text>
+                )}
                 <View style={{ alignItems: "center" }}>
                   <Image
                     source={diagramSrc}
                     alt="Diagram"
                     resizeMode="contain"
-                    style={{ width: 230 }}
+                    style={{ width: diagramWidthPercentage }}
                   />
                 </View>
               </View>
@@ -523,7 +545,7 @@ const DiagramQuestion = ({
                   fontSize: 15,
                 }}
               >
-                {questionBeforeDiagram}
+                {questionAfterDiagram}
               </Text>
             )}
             <TouchableOpacity
@@ -560,6 +582,54 @@ const DiagramQuestion = ({
               )}
             </TouchableOpacity>
             <View>
+              {/* TODO */}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginLeft: "auto",
+                  marginTop: 40,
+                  gap: 7,
+                }}
+              >
+                {option1 && (
+                  <>
+                    <Text
+                      style={{ fontFamily: fontFamily.Medium, fontSize: 13 }}
+                    >
+                      {option1Label}
+                    </Text>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      style={{
+                        position: "relative",
+                        borderStyle: "dashed",
+                        borderColor: colors.grayLight,
+                        borderWidth: 1,
+                        width: option1Width,
+                        marginVertical: 30,
+                        marginLeft: "auto",
+                      }}
+                    >
+                      <TextInput
+                        //  value={answerValue1}
+                        //  onChangeText={(value) =>
+                        //    handleChangeText(value, "input1")
+                        //  }
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          bottom: 0,
+                          width: "100%",
+                          fontFamily: fontFamily.Medium,
+                          color: colors.grayLight,
+                          fontSize: 15,
+                        }}
+                      />
+                    </TouchableOpacity>
+                  </>
+                )}
+              </View>
               {point1 && (
                 <View
                   style={{
@@ -701,7 +771,7 @@ const DiagramQuestion = ({
                             fontSize: 13,
                           }}
                         >
-                          {pointOption1Label}
+                          {pointOption2Label}
                         </Text>
                         <TouchableOpacity
                           activeOpacity={0.7}
