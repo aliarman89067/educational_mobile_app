@@ -1,11 +1,4 @@
-import {
-  Image,
-  StyleSheet,
-  Text,
-  ToastAndroid,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Image, StyleSheet, Text, ToastAndroid, View } from "react-native";
 import { router, Tabs } from "expo-router";
 import {
   friendsImage,
@@ -14,15 +7,16 @@ import {
   profileImage,
 } from "@/constants/images";
 import { colors } from "@/constants/colors";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import asyncStorage from "@react-native-async-storage/async-storage";
 import { useSocket } from "@/context/SocketContext";
 import {
   useRequestQuizReceivedStore,
   useRequestReceivedStore,
 } from "@/context/zustandStore";
-import { fontFamily } from "@/constants/fonts";
 import QuizRequestNotificantion from "@/components/QuizRequestNotificantion";
+
+import SketchCanvasContainer from "@/components/past-papers/SketchCanvasContainer";
 
 interface TabBarIconProps {
   focused: boolean;
@@ -121,83 +115,86 @@ const TabsLayout = () => {
     };
   }, []);
   return (
-    <View style={{ flex: 1, position: "relative" }}>
-      {data && <QuizRequestNotificantion />}
-      <Tabs
-        screenOptions={{
-          headerShown: false,
-          tabBarShowLabel: false,
-          tabBarStyle: styles.tabBarContainer,
-        }}
-      >
-        <Tabs.Screen
-          key={1}
-          name="index"
-          options={{
-            tabBarLabel: "Home",
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon focused={focused} label="Home" icon={homeImage} />
-            ),
+    <>
+      <SketchCanvasContainer />
+      <View style={{ flex: 1, position: "relative" }}>
+        {data && <QuizRequestNotificantion />}
+        <Tabs
+          screenOptions={{
+            headerShown: false,
+            tabBarShowLabel: false,
+            tabBarStyle: styles.tabBarContainer,
           }}
-        />
-        <Tabs.Screen
-          key={2}
-          name="history"
-          options={{
-            tabBarLabel: "History",
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon
-                focused={focused}
-                label="History"
-                icon={historyImage}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          key={3}
-          name="profile"
-          options={{
-            tabBarLabel: "Profile",
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon
-                focused={focused}
-                label="Profile"
-                icon={profileImage}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          key={4}
-          name="friends"
-          options={{
-            tabBarLabel: "Friends",
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon
-                focused={focused}
-                label="Friends"
-                icon={friendsImage}
-              />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          key={4}
-          name="papers"
-          options={{
-            tabBarLabel: "Papers",
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon
-                focused={focused}
-                label="Papers"
-                icon={friendsImage}
-              />
-            ),
-          }}
-        />
-      </Tabs>
-    </View>
+        >
+          <Tabs.Screen
+            key={1}
+            name="index"
+            options={{
+              tabBarLabel: "Home",
+              tabBarIcon: ({ focused }) => (
+                <TabBarIcon focused={focused} label="Home" icon={homeImage} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            key={2}
+            name="history"
+            options={{
+              tabBarLabel: "History",
+              tabBarIcon: ({ focused }) => (
+                <TabBarIcon
+                  focused={focused}
+                  label="History"
+                  icon={historyImage}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            key={3}
+            name="profile"
+            options={{
+              tabBarLabel: "Profile",
+              tabBarIcon: ({ focused }) => (
+                <TabBarIcon
+                  focused={focused}
+                  label="Profile"
+                  icon={profileImage}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            key={4}
+            name="friends"
+            options={{
+              tabBarLabel: "Friends",
+              tabBarIcon: ({ focused }) => (
+                <TabBarIcon
+                  focused={focused}
+                  label="Friends"
+                  icon={friendsImage}
+                />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            key={4}
+            name="papers"
+            options={{
+              tabBarLabel: "Papers",
+              tabBarIcon: ({ focused }) => (
+                <TabBarIcon
+                  focused={focused}
+                  label="Papers"
+                  icon={friendsImage}
+                />
+              ),
+            }}
+          />
+        </Tabs>
+      </View>
+    </>
   );
 };
 

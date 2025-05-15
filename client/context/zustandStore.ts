@@ -88,3 +88,67 @@ export const useRequestQuizReceivedStore = create<UseRequestQuizReceivedStore>(
     },
   })
 );
+
+interface UseSketchCanvasPayload {
+  undoStackNodes: any[];
+  redoStackNodes: any[];
+  pathsNodes: any[];
+  imagePathString: string;
+}
+
+interface UseSketchCanvasProps {
+  data: UseSketchCanvasPayload;
+  status: "start" | "pending" | "end";
+  start: (value: UseSketchCanvasPayload & { index: number }) => void;
+  pending: (value: UseSketchCanvasPayload) => void;
+  end: () => void;
+  index: number;
+}
+
+export const useSketchCanvasStore = create<UseSketchCanvasProps>(
+  (set, get) => ({
+    data: {
+      undoStackNodes: [],
+      redoStackNodes: [],
+      pathsNodes: [],
+      imagePathString: "",
+    },
+    index: 0,
+    status: "end",
+    start: (data) => {
+      set({
+        status: "start",
+        data: {
+          undoStackNodes: data.undoStackNodes,
+          redoStackNodes: data.redoStackNodes,
+          pathsNodes: data.pathsNodes,
+          imagePathString: data.imagePathString,
+        },
+        index: data.index,
+      });
+    },
+    pending: (data) => {
+      set({
+        status: "pending",
+        data: {
+          undoStackNodes: data.undoStackNodes,
+          redoStackNodes: data.redoStackNodes,
+          pathsNodes: data.pathsNodes,
+          imagePathString: data.imagePathString,
+        },
+      });
+    },
+    end: () => {
+      set({
+        status: "end",
+        data: {
+          undoStackNodes: [],
+          redoStackNodes: [],
+          pathsNodes: [],
+          imagePathString: "",
+        },
+        index: 0,
+      });
+    },
+  })
+);

@@ -3,6 +3,7 @@ import React from "react";
 import {
   joinFriendHeader,
   onlineHeader,
+  quizBox,
   soloHeader,
   surprise,
 } from "@/constants/images";
@@ -21,11 +22,12 @@ const GameHeaders = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Image
-          source={onlineHeader}
+          source={quizBox}
           alt="Online Header Image"
           style={styles.headerImg}
         />
         <View style={styles.buttonContainer}>
+          <Text style={styles.headerTitle}>Online Quiz</Text>
           <TouchableOpacity
             onPress={() => handlePlay("online")}
             style={styles.button}
@@ -48,11 +50,12 @@ const GameHeaders = () => {
       </View>
       <View style={styles.header}>
         <Image
-          source={joinFriendHeader}
+          source={quizBox}
           alt="Join Friend Image"
           style={styles.headerImg}
         />
         <View style={styles.buttonContainer}>
+          <Text style={styles.headerTitle}>Join Friend</Text>
           <TouchableOpacity
             onPress={() => handlePlay("friend")}
             style={styles.button}
@@ -64,11 +67,12 @@ const GameHeaders = () => {
       </View>
       <View style={styles.header}>
         <Image
-          source={soloHeader}
+          source={quizBox}
           alt="Solo Header Image"
           style={styles.headerImg}
         />
         <View style={styles.buttonContainer}>
+          <Text style={styles.headerTitle}>Solo Quiz</Text>
           <TouchableOpacity
             onPress={() => handlePlay("solo")}
             style={styles.button}
@@ -97,22 +101,22 @@ export default GameHeaders;
 
 const styles = StyleSheet.create({
   container: {
-    gap: 20,
+    gap: 6,
     width: "100%",
     flex: 1,
   },
   header: {
-    gap: 3,
+    gap: 10,
     width: "100%",
+    flexDirection: "row",
   },
   headerImg: {
-    width: "100%",
-    height: 200,
+    width: 180,
+    height: 180,
     resizeMode: "contain",
   },
   buttonContainer: {
-    flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     gap: 7,
   },
@@ -136,5 +140,10 @@ const styles = StyleSheet.create({
     width: 90,
     height: 60,
     resizeMode: "contain",
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontFamily: fontFamily.Medium,
+    color: colors.grayDark,
   },
 });
